@@ -1,0 +1,5 @@
+/sxf4j-core/target/
+/sxf4j-utils/target/
+.idea
+*.iml
+.DS_Store
