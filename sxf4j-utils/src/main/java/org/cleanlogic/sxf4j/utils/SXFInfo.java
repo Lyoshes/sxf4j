@@ -4,6 +4,7 @@ import org.apache.commons.cli.*;
 import org.cleanlogic.sxf4j.exceptions.SXFWrongFormatException;
 import org.cleanlogic.sxf4j.fixes.SXFPassportFixes;
 import org.cleanlogic.sxf4j.format.SXFRecord;
+import org.cleanlogic.sxf4j.format.SXFRecordSemantic;
 import org.cleanlogic.sxf4j.io.SXFReaderOptions;
 import org.cleanlogic.sxf4j.io.SXFReader;
 
@@ -51,10 +52,6 @@ public class SXFInfo {
         recordGeomertyType.setArgName("type");
         options.addOption(recordGeomertyType);
 
-//        Option fixCoordinateOption = new Option("fc", "fixCoordinates", true, "Fix coordinates");
-//        fixCoordinateOption.setArgName("fix | skip");
-//        options.addOption(fixCoordinateOption);
-
         Option helpOption = new Option("h", "help", false, "Print usage");
         options.addOption(helpOption);
 
@@ -88,14 +85,6 @@ public class SXFInfo {
                     sxfReaderOptions.dstSRID = Integer.parseInt(srid.split(":")[1]);
                 }
             }
-//            if (commandLine.hasOption("fixCoordinates")) {
-//                String value = commandLine.getOptionValue("fixCoordinates");
-//                if (value.equalsIgnoreCase(SXFPassportFixes.FixCoordinates.FIX.toString())) {
-//                    sxfReaderOptions.fixCoordinates = SXFPassportFixes.FixCoordinates.FIX;
-//                } else if (value.equalsIgnoreCase(SXFPassportFixes.FixCoordinates.SKIP.toString())) {
-//                    sxfReaderOptions.fixCoordinates = SXFPassportFixes.FixCoordinates.SKIP;
-//                }
-//            }
 
             StringList geometryTypes = new StringList();
             geometryTypes.add("WKT");
@@ -152,6 +141,7 @@ public class SXFInfo {
                         SXFRecord sxfRecord = sxfReader.getRecordByIncode(value);
                         if (commandLine.hasOption("record")) {
                             sxfRecord.getHeader().print();
+                            printSemantics(sxfRecord);
                         }
                         if (commandLine.hasOption("recordGeometry")) {
                             printGeometry(sxfRecord, geometryType);
@@ -162,6 +152,7 @@ public class SXFInfo {
                             sxfRecord = sxfReader.getRecordByIncode(value);
                             if (commandLine.hasOption("record")) {
                                 sxfRecord.getHeader().print();
+                                printSemantics(sxfRecord);
                             }
                             if (commandLine.hasOption("recordGeometry")) {
                                 if (commandLine.hasOption("recordGeometry")) {
@@ -173,6 +164,7 @@ public class SXFInfo {
                         SXFRecord sxfRecord = sxfReader.getRecordByNumber(value);
                         if (commandLine.hasOption("record")) {
                             sxfRecord.getHeader().print();
+                            printSemantics(sxfRecord);
                         }
                         if (commandLine.hasOption("recordGeometry")) {
                             printGeometry(sxfRecord, geometryType);
@@ -198,6 +190,15 @@ public class SXFInfo {
             System.out.println(sxfRecord.getMetric().geometryAsEWKT());
         } else if (geometryType.equalsIgnoreCase("WKB")) {
             System.out.println(sxfRecord.getMetric().geometryAsWKB());
+        }
+    }
+
+    private static void printSemantics(SXFRecord sxfRecord) {
+        System.out.printf("RecordSemantics info:\n");
+        List<SXFRecordSemantic> sxfRecordSemantics = sxfRecord.getSemantics();
+        for (SXFRecordSemantic sxfRecordSemantic : sxfRecordSemantics) {
+            System.out.printf("\t");
+            sxfRecordSemantic.print();
         }
     }
 

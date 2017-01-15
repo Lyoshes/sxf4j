@@ -1,14 +1,8 @@
 package org.cleanlogic.sxf4j.format;
 
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.geom.impl.CoordinateArraySequence;
-import com.vividsolutions.jts.geom.impl.CoordinateArraySequenceFactory;
-import com.vividsolutions.jts.io.WKBWriter;
-import com.vividsolutions.jts.io.WKTWriter;
 import org.cleanlogic.sxf4j.SXF;
 import org.cleanlogic.sxf4j.enums.*;
-
-import java.nio.MappedByteBuffer;
 
 /**
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>

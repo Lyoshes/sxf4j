@@ -1,7 +1,6 @@
 package org.cleanlogic.sxf4j.io;
 
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.geom.impl.CoordinateArraySequence;
 import org.cleanlogic.sxf4j.SXF;
 import org.cleanlogic.sxf4j.enums.MetricElementSize;
 import org.cleanlogic.sxf4j.format.SXFPassport;

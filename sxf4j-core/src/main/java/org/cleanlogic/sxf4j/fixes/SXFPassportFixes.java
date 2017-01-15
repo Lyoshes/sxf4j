@@ -1,6 +1,5 @@
 package org.cleanlogic.sxf4j.fixes;
 
-import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import org.cleanlogic.sxf4j.enums.MapInitKind;
 import org.cleanlogic.sxf4j.enums.MapInitType;

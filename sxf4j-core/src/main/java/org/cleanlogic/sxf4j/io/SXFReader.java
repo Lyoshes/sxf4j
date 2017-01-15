@@ -1,13 +1,10 @@
 package org.cleanlogic.sxf4j.io;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Geometry;
 import org.cleanlogic.sxf4j.SXF;
-import org.cleanlogic.sxf4j.convert.PROJ;
 import org.cleanlogic.sxf4j.exceptions.SXFWrongFormatException;
-import org.cleanlogic.sxf4j.format.*;
-import org.osgeo.proj4j.ProjCoordinate;
+import org.cleanlogic.sxf4j.format.SXFDescriptor;
+import org.cleanlogic.sxf4j.format.SXFPassport;
+import org.cleanlogic.sxf4j.format.SXFRecord;
 
 import java.io.File;
 import java.io.IOException;
