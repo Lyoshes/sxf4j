@@ -4,6 +4,7 @@ import org.apache.commons.cli.*;
 import org.cleanlogic.sxf4j.exceptions.SXFWrongFormatException;
 import org.cleanlogic.sxf4j.fixes.SXFPassportFixes;
 import org.cleanlogic.sxf4j.format.SXFRecord;
+import org.cleanlogic.sxf4j.format.SXFRecordMetricText;
 import org.cleanlogic.sxf4j.format.SXFRecordSemantic;
 import org.cleanlogic.sxf4j.io.SXFReaderOptions;
 import org.cleanlogic.sxf4j.io.SXFReader;
@@ -91,7 +92,7 @@ public class SXFInfo {
             geometryTypes.add("WKB");
             geometryTypes.add("EWKT");
 
-            String geometryType = "";
+            String geometryType = "WKT";
             if (commandLine.hasOption("geometryType")) {
                 geometryType = commandLine.getOptionValue("geometryType");
                 if (!geometryTypes.contains(geometryType)) {
@@ -141,6 +142,9 @@ public class SXFInfo {
                         SXFRecord sxfRecord = sxfReader.getRecordByIncode(value);
                         if (commandLine.hasOption("record")) {
                             sxfRecord.getHeader().print();
+                            if (sxfRecord.getHeader().isText) {
+                                printText(sxfRecord);
+                            }
                             printSemantics(sxfRecord);
                         }
                         if (commandLine.hasOption("recordGeometry")) {
@@ -152,6 +156,9 @@ public class SXFInfo {
                             sxfRecord = sxfReader.getRecordByIncode(value);
                             if (commandLine.hasOption("record")) {
                                 sxfRecord.getHeader().print();
+                                if (sxfRecord.getHeader().isText) {
+                                    printText(sxfRecord);
+                                }
                                 printSemantics(sxfRecord);
                             }
                             if (commandLine.hasOption("recordGeometry")) {
@@ -164,6 +171,9 @@ public class SXFInfo {
                         SXFRecord sxfRecord = sxfReader.getRecordByNumber(value);
                         if (commandLine.hasOption("record")) {
                             sxfRecord.getHeader().print();
+                            if (sxfRecord.getHeader().isText) {
+                                printText(sxfRecord);
+                            }
                             printSemantics(sxfRecord);
                         }
                         if (commandLine.hasOption("recordGeometry")) {
@@ -202,8 +212,23 @@ public class SXFInfo {
         }
     }
 
+    private static void printText(SXFRecord sxfRecord) {
+        System.out.printf("Text:\t{");
+        for (int i = 0; i < sxfRecord.getMetric().metricTexts.size(); i++) {
+            SXFRecordMetricText sxfRecordMetricText = sxfRecord.getMetric().metricTexts.get(i);
+            if (i != 0) {
+                System.out.printf(",");
+            }
+            System.out.printf("%s", sxfRecordMetricText.toString());
+        }
+        System.out.println("}");
+    }
+
     private static void search(File file, List<File> files, String filter) {
         File[] listFiles = file.listFiles();
+        if (listFiles == null) {
+            return;
+        }
         for (File _file : listFiles) {
             if (_file.isDirectory()) {
                 search(_file, files, filter);

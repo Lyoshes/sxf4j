@@ -4,11 +4,17 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.WKBWriter;
 import com.vividsolutions.jts.io.WKTWriter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 public class SXFRecordMetric {
     public Geometry geometry;
+    public List<SXFRecordMetricText> metricTexts = new ArrayList<>();
+
+    public SXFRecordMetric() {}
 
     public String geometryAsWKB() {
         return geometryAsWKB(geometry);

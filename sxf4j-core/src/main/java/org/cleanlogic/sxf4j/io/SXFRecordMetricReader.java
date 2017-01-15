@@ -3,10 +3,14 @@ package org.cleanlogic.sxf4j.io;
 import com.vividsolutions.jts.geom.*;
 import org.cleanlogic.sxf4j.SXF;
 import org.cleanlogic.sxf4j.enums.MetricElementSize;
+import org.cleanlogic.sxf4j.enums.TextEncoding;
+import org.cleanlogic.sxf4j.enums.TextMetricAlign;
 import org.cleanlogic.sxf4j.format.SXFPassport;
 import org.cleanlogic.sxf4j.format.SXFRecordHeader;
 import org.cleanlogic.sxf4j.format.SXFRecordMetric;
+import org.cleanlogic.sxf4j.format.SXFRecordMetricText;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +23,7 @@ public class SXFRecordMetricReader {
     private final SXFPassport _sxfPassport;
     private final SXFReaderOptions _sxfReaderOptions;
     private final GeometryFactory _geometryFactory;
+
     public SXFRecordMetricReader(MappedByteBuffer mappedByteBuffer, SXFPassport sxfPassport) {
         _mappedByteBuffer = mappedByteBuffer;
         _sxfPassport = sxfPassport;
@@ -43,8 +48,10 @@ public class SXFRecordMetricReader {
             recordCoordinates.add(coordinate);
         }
         // After main metric may be text metric
+        List<SXFRecordMetricText> sxfRecordMetricTexts = new ArrayList<>();
         if (sxfRecordHeader.isText) {
-            //TODO: Later
+            SXFRecordMetricText sxfRecordMetricText = readText();
+            sxfRecordMetricTexts.add(sxfRecordMetricText);
         }
 
         List<List<Coordinate>> subrecordsCoordinates = new ArrayList<>();
@@ -60,19 +67,35 @@ public class SXFRecordMetricReader {
                 subrecordCoordinates.add(coordinate);
             }
             subrecordsCoordinates.add(subrecordCoordinates);
-        }
-        // After main metric may be text metric
-        if (sxfRecordHeader.isText) {
-            //TODO: Later
+            // Text of subjects
+            if (sxfRecordHeader.isText) {
+                SXFRecordMetricText sxfRecordMetricText = readText();
+                sxfRecordMetricTexts.add(sxfRecordMetricText);
+            }
         }
 
         SXFRecordMetric sxfRecordMetric = new SXFRecordMetric();
+        if (sxfRecordHeader.isText) {
+            sxfRecordMetric.metricTexts = sxfRecordMetricTexts;
+        }
         switch (sxfRecordHeader.local) {
             case LINE:
             case TITLE:
             case VECTOR:
             case MIXED:
-                sxfRecordMetric.geometry = _geometryFactory.createLineString(recordCoordinates.toArray(new Coordinate[recordCoordinates.size()]));
+                if (recordCoordinates.size() == 1) {
+                    recordCoordinates.add(recordCoordinates.get(0));
+                }
+                LineString[] lineStrings = new LineString[1 + subrecordsCoordinates.size()];
+                lineStrings[0] = _geometryFactory.createLineString(recordCoordinates.toArray(new Coordinate[recordCoordinates.size()]));
+                for (int i = 0; i < subrecordsCoordinates.size(); i++) {
+                    List<Coordinate> coordinates = subrecordsCoordinates.get(i);
+                    if (coordinates.size() == 1) {
+                        coordinates.add(coordinates.get(0));
+                    }
+                    lineStrings[i + 1] = _geometryFactory.createLineString(coordinates.toArray(new Coordinate[coordinates.size()]));
+                }
+                sxfRecordMetric.geometry = _geometryFactory.createMultiLineString(lineStrings);
                 break;
             case POINT:
                 sxfRecordMetric.geometry = _geometryFactory.createPoint(recordCoordinates.get(0));
@@ -134,5 +157,38 @@ public class SXFRecordMetricReader {
         }
 
         return new Coordinate(x, y, h);
+    }
+
+    /**
+     * Read text of metric and they align. Function not will be used directly!
+     * @return {@link SXFRecordMetricText}
+     */
+    private SXFRecordMetricText readText() {
+        int length = (int) _mappedByteBuffer.get();
+        byte[] string = new byte[length];
+        _mappedByteBuffer.get(string);
+        String text = null;
+        try {
+            text = new String(string, TextEncoding.CP1251.getName());
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        // Close binary \0
+        _mappedByteBuffer.get();
+        // Calculate align of text
+        TextMetricAlign align = TextMetricAlign.MIDDLE_LEFT;
+        if (text != null) {
+            if ((length - text.trim().length()) >= 3) {
+                for (int i = 0; i < text.length(); i++) {
+                    char c = text.charAt(i);
+                    if (c == '\0') {
+                        c = text.charAt(i + 1);
+                        align = TextMetricAlign.fromValue((int) c);
+                        break;
+                    }
+                }
+            }
+        }
+        return new SXFRecordMetricText(text, align);
     }
 }

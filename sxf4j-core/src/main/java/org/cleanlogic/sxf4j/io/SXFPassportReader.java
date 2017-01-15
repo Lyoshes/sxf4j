@@ -121,7 +121,6 @@ public class SXFPassportReader {
 
         byte[] name = new byte[26];
         _mappedByteBuffer.get(name);
-        _sxfPassport.name = new String(name);
         try {
             _sxfPassport.name = new String(name, TextEncoding.IBM866.getName());
         } catch (UnsupportedEncodingException e) {
