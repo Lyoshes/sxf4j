@@ -145,9 +145,12 @@ public class SXFRecordHeader {
      */
     public int pointCount;
     /**
-     * Byte offset for begin Metric Object
+     * Byte offset for begin metric block
      */
     public long metricOffset;
+    /**
+     * Byte offset for begin seamntics block
+     */
     public long semanticOffset;
 
     public SXFRecordHeader(int version) {
@@ -205,5 +208,6 @@ public class SXFRecordHeader {
         System.out.printf("\tSubject count:\t\t%d\n", sxfRecordHeader.subjectCount);
         System.out.printf("\tPoint count:\t\t%d\t\t\n", sxfRecordHeader.pointCount);
         System.out.printf("\tMetric offset:\t\t%d\n", sxfRecordHeader.metricOffset);
+        System.out.printf("\tSemantic offset:\t%d\n", sxfRecordHeader.semanticOffset);
     }
 }
