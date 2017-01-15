@@ -1,6 +1,5 @@
 package org.cleanlogic.sxf4j.io;
 
-import com.vividsolutions.jts.geom.Geometry;
 import org.cleanlogic.sxf4j.SXF;
 import org.cleanlogic.sxf4j.enums.FrameOut;
 import org.cleanlogic.sxf4j.enums.Local;
@@ -9,7 +8,6 @@ import org.cleanlogic.sxf4j.enums.Spline;
 import org.cleanlogic.sxf4j.fixes.SXFPassportFixes;
 import org.cleanlogic.sxf4j.format.SXFDescriptor;
 import org.cleanlogic.sxf4j.format.SXFPassport;
-import org.cleanlogic.sxf4j.format.SXFRecord;
 import org.cleanlogic.sxf4j.format.SXFRecordHeader;
 
 import java.nio.BufferUnderflowException;
@@ -113,6 +111,7 @@ class SXFRecordHeaderReader {
                 sxfRecordHeader.pointCount = (metricDescription >> 16) & 0xFFFF;
 
                 sxfRecordHeader.metricOffset = _mappedByteBuffer.position();
+                sxfRecordHeader.semanticOffset = sxfRecordHeader.metricOffset + sxfRecordHeader.metricLength;
 
                 _mappedByteBuffer.position(_mappedByteBuffer.position() + sxfRecordHeader.length - 32);
 
@@ -211,6 +210,7 @@ class SXFRecordHeaderReader {
                 sxfRecordHeader.pointCount = _mappedByteBuffer.getShort();
 
                 sxfRecordHeader.metricOffset = _mappedByteBuffer.position();
+                sxfRecordHeader.semanticOffset = sxfRecordHeader.metricOffset + sxfRecordHeader.metricLength;
 
                 _mappedByteBuffer.position(_mappedByteBuffer.position() + sxfRecordHeader.length - 32);
 
