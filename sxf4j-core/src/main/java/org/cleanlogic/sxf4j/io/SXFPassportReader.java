@@ -11,6 +11,7 @@ import org.cleanlogic.sxf4j.format.SXFPassport;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -121,6 +122,11 @@ public class SXFPassportReader {
         byte[] name = new byte[26];
         _mappedByteBuffer.get(name);
         _sxfPassport.name = new String(name);
+        try {
+            _sxfPassport.name = new String(name, TextEncoding.IBM866.getName());
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
 
         byte[] infoFlags = new byte[4];
         _mappedByteBuffer.get(infoFlags);
@@ -130,7 +136,7 @@ public class SXFPassportReader {
         _sxfPassport.codeTypeFlag = (infoFlags[0] >> 5) & 0x3;
         _sxfPassport.generalizationFlag = (infoFlags[0] >> 7) & 0x1;
 
-        _sxfPassport.textEncodingFlag = TextEncoding.ASCIIZ;
+        _sxfPassport.textEncodingFlag = TextEncoding.IBM866;
 
         _sxfPassport.code = _mappedByteBuffer.getInt();
 
@@ -225,8 +231,11 @@ public class SXFPassportReader {
 
         byte[] name = new byte[32];
         _mappedByteBuffer.get(name);
-        _sxfPassport.name = new String(name);
-
+        try {
+            _sxfPassport.name = new String(name, TextEncoding.CP1251.getName());
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         byte[] infoFlags = new byte[4];
         _mappedByteBuffer.get(infoFlags);
         _sxfPassport.conditionFlag = infoFlags[0] & 0x3;
