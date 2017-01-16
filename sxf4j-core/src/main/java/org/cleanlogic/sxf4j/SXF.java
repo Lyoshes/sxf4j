@@ -41,34 +41,4 @@ public class SXF {
      * Length of SXF Passport for version 4;
      */
     public static final int PASSPORT_4_LENGHT = 400;
-
-    public static int DetectSRID(SXFPassport sxfPassport) {
-        if (sxfPassport.mapType == MapType.LATLONG &&
-                sxfPassport.ellipsoidKind == EllipsoidKind.WGS_84 &&
-                sxfPassport.coordinateSystem == CoordinateSystem.GEOCOORDINATE &&
-                sxfPassport.frameKind == FrameKind.FREE &&
-                sxfPassport.planeUnit == Unit.METRE &&
-                sxfPassport.materialProjection == MapProjection.LATITUDELONGITUDE) {
-            return 4326;
-        }
-        if (sxfPassport.mapType == MapType.MERCATOR &&
-                sxfPassport.ellipsoidKind == EllipsoidKind.WGS_84 &&
-                sxfPassport.coordinateSystem == CoordinateSystem.CONDITION &&
-                sxfPassport.frameKind == FrameKind.FREE &&
-                sxfPassport.planeUnit == Unit.METRE &&
-                sxfPassport.materialProjection == MapProjection.WEBMERCATOR) {
-            return 3857;
-        }
-        if (sxfPassport.mapType == MapType.TOPOGRAPHIC &&
-                sxfPassport.ellipsoidKind == EllipsoidKind.KRASOVSKY42 &&
-                sxfPassport.coordinateSystem == CoordinateSystem.ORTHOGONAL &&
-                sxfPassport.frameKind == FrameKind.TRAPEZECURVE &&
-                sxfPassport.planeUnit == Unit.METRE &&
-                sxfPassport.materialProjection == MapProjection.GAUSSCONFORMAL &&
-                sxfPassport.heightSystem == HeightSystem.BALTIC) {
-            int zone = sxfPassport.getZone();
-            return 28400 + zone;
-        }
-        return 0;
-    }
 }
