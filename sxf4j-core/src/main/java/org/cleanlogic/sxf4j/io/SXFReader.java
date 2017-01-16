@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Main class of access to SXF file format.
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 public class SXFReader {

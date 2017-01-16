@@ -10,6 +10,11 @@ import java.util.List;
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 public class Utils {
+    /**
+     * Try detect SRID of SXF by they passport by constants
+     * @param sxfPassport passport of SXF
+     * @return detected SRID or 0 if not detected
+     */
     public static int detectSRID(SXFPassport sxfPassport) {
         if (sxfPassport.mapType == MapType.LATLONG &&
                 sxfPassport.ellipsoidKind == EllipsoidKind.WGS_84 &&
@@ -40,6 +45,12 @@ public class Utils {
         return 0;
     }
 
+    /**
+     * Recursive search files by extension filter
+     * @param file where will be search processed
+     * @param files list of finded files
+     * @param filter file extension filter (.sxf)
+     */
     public static void search(File file, List<File> files, String filter) {
         File[] listFiles = file.listFiles();
         if (listFiles == null) {
