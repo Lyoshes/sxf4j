@@ -28,7 +28,7 @@ Dependes:
 ```
  
  ## Command line tools
- ### sxfinfo [\<options\>] <sxfile|dir>
+ ### sxfinfo [\<options\>] \<sxfile|dir\>
  This tool like as shp2pgsql with same flags and output formats.
  
  Example usage:
