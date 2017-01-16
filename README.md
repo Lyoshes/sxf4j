@@ -51,14 +51,16 @@ Dependes:
  |`-h`|Print usage|No|
  |`-p`|Print passport of SXF|No|
  |`-q`|Not print warning messages|No|
- |`-r`|Print record header, text (if exists), semantics (if exists) without geometry (incode:<i> - by incode, excode:<i> -by excode, number:<i> - by number|No|
- |`-rg`|Print record geometry only (incode:<i> - by incode, excode:<i> - by excode, number:<i> - by number|No|
+ |`-r`|Print record header, text (if exists), semantics (if exists) without geometry (incode:\<i\> - by incode, excode:\<i\> -by excode, number:\<i\> - by number|No|
+ |`-rg`|Print record geometry only (incode:\<i\> - by incode, excode:\<i\> - by excode, number:\<i\> - by number|No|
  |`-s`|Set the SRID field. Defaults to 0.|No|
  
  ### sxf2pgsql [\<options\>] <sxfile|dir> [[\<schema\>.]\<table\>]
  `./bin/sxf2pgsql.sh -d -s 4326 /Users/iserge/Develop/Map/K37007.SXF | psql -U postgres sxf`
  
  `./bin/sxf2pgsql.sh -e -d -s 4326 /Users/iserge/Develop/Map/K37007.SXF | psql -U postgres sxf`
+ 
+ `./bin/sxf2pgsql.sh -s 4326 /Users/iserge/Develop/Map/500\ 000 | psql -U postgres sxf -q`
  
  ### Command line flags:
  |Flag|Description|Required|
