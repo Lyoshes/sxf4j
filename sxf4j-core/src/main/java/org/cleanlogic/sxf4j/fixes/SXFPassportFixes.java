@@ -93,8 +93,15 @@ public class SXFPassportFixes {
 
             Geometry geometry = sxfRecord.getMetric().geometry;
             // If Passport border equals border record dx0 and dy0 = 0
-            double dx0 = sxfPassport.xSouthWest - geometry.getCoordinates()[0].x;
-            double dy0 = sxfPassport.ySouthWest - geometry.getCoordinates()[0].y;
+            double dx0;
+            double dy0;
+            if (!sxfPassport.isFlipCoordinate) {
+                dx0 = sxfPassport.xSouthWest - geometry.getCoordinates()[0].x;
+                dy0 = sxfPassport.ySouthWest - geometry.getCoordinates()[0].y;
+            } else {
+                dx0 = sxfPassport.xSouthWest - geometry.getCoordinates()[0].y;
+                dy0 = sxfPassport.ySouthWest - geometry.getCoordinates()[0].x;
+            }
             sxfPassport.dx0 = dx0;
             sxfPassport.dy0 = dy0;
             // Restore current position

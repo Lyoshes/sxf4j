@@ -9,5 +9,6 @@ public class SXFReaderOptions {
     public boolean quite = false;
     public int srcSRID = 0;
     public int dstSRID = 0;
-    public SXFPassportFixes.FixCoordinates fixCoordinates = SXFPassportFixes.FixCoordinates.SKIP;
+    public boolean flipCoordinates = false;
+//    public SXFPassportFixes.FixCoordinates fixCoordinates = SXFPassportFixes.FixCoordinates.SKIP;
 }

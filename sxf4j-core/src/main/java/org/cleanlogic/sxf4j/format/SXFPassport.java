@@ -3,6 +3,7 @@ package org.cleanlogic.sxf4j.format;
 import com.vividsolutions.jts.geom.*;
 import org.cleanlogic.sxf4j.SXF;
 import org.cleanlogic.sxf4j.enums.*;
+import org.cleanlogic.sxf4j.utils.Utils;
 
 /**
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
@@ -258,38 +259,7 @@ public class SXFPassport {
     private Geometry _nativeGeograhy;
     private Geometry _nativeDevice;
 
-//    public void calculateCoordinatesOffset(MappedByteBuffer mappedByteBuffer, SXFRecordHeader sxfRecordHeader) {
-//        int position = mappedByteBuffer.position();
-//        SXFRecord sxfRecord = new SXFRecord(mappedByteBuffer, this);
-//        sxfRecord.setHeader(sxfRecordHeader);
-//
-//        Geometry geometry = sxfRecord.getMetric().geometry;
-//        System.out.println(sxfRecord.getMetric().geometryAsWKT());
-//        Envelope envelope = geometry.getEnvelopeInternal();
-//                /*
-//                X
-//                |
-//                |
-//                |
-//                +----------Y
-//                 */
-//        double xSouthWest = envelope.getMinX();
-//        double ySouthWest = envelope.getMinY();
-//        double xNorthWest = envelope.getMaxX();
-//        double yNorthWest = envelope.getMinY();
-//        double xNorthEast = envelope.getMaxX();
-//        double yNorthEast = envelope.getMaxY();
-//        double xSouthEast = envelope.getMinX();
-//        double ySouthEast = envelope.getMaxY();
-//
-//        System.out.printf("Border envelope: (%f %f), (%f %f), (%f %f), (%f %f)\n", xSouthWest, ySouthWest, xNorthWest, yNorthWest, xNorthEast, yNorthEast, xSouthEast, ySouthEast);
-//
-//        // Offset of center coordinate system
-//        this.dxBorderDevice = this.xSouthWest - xSouthWest;
-//        this.dyBorderDevice = this.ySouthWest - ySouthWest;
-//        // Restore buffer position
-//        mappedByteBuffer.position(position);
-//    }
+    public boolean isFlipCoordinate = false;
 
     public int getZone() {
         return getZone(this);
@@ -321,23 +291,39 @@ public class SXFPassport {
         double x = sxfPassport.xSouthWest + (coordinate.x - sxfPassport.xBorderDeviceSouthWest) / sxfPassport.deviceCapability * sxfPassport.scale + sxfPassport.dx0;
         double y = sxfPassport.ySouthWest + (coordinate.y - sxfPassport.yBorderDeviceSouthWest) / sxfPassport.deviceCapability * sxfPassport.scale + sxfPassport.dy0;
 
-        double h = coordinate.z;
-
-        return new Coordinate(x, y, h);
+        double z = coordinate.z;
+        return new Coordinate(x, y, z);
+//        if (!sxfPassport.isFlipCoordinate) {
+//            return new Coordinate(x, y, z);
+//        } else {
+//            return new Coordinate(y, x, z);
+//        }
     }
 
     public Geometry getNativeGeometry() {
+        return getNativeGeometry(false);
+    }
+
+    public Geometry getNativeGeometry(boolean flipCoordinates) {
         if (_nativeGeometry != null) {
             return _nativeGeometry;
         }
-        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), SXF.DetectSRID(this));
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), Utils.detectSRID(this));
 
         Coordinate[] coordinates = new Coordinate[5];
-        coordinates[0] = new Coordinate(xSouthWest, ySouthWest, 0.);
-        coordinates[1] = new Coordinate(xNorthWest, yNorthWest, 0.);
-        coordinates[2] = new Coordinate(xNorthEast, yNorthEast, 0.);
-        coordinates[3] = new Coordinate(xSouthEast, ySouthEast, 0.);
-        coordinates[4] = new Coordinate(xSouthWest, ySouthWest, 0.);
+        if (!flipCoordinates) {
+            coordinates[0] = new Coordinate(xSouthWest, ySouthWest, 0.);
+            coordinates[1] = new Coordinate(xNorthWest, yNorthWest, 0.);
+            coordinates[2] = new Coordinate(xNorthEast, yNorthEast, 0.);
+            coordinates[3] = new Coordinate(xSouthEast, ySouthEast, 0.);
+            coordinates[4] = new Coordinate(xSouthWest, ySouthWest, 0.);
+        } else {
+            coordinates[0] = new Coordinate(ySouthWest, xSouthWest, 0.);
+            coordinates[1] = new Coordinate(yNorthWest, xNorthWest, 0.);
+            coordinates[2] = new Coordinate(yNorthEast, xNorthEast, 0.);
+            coordinates[3] = new Coordinate(ySouthEast, xSouthEast, 0.);
+            coordinates[4] = new Coordinate(ySouthWest, xSouthWest, 0.);
+        }
 
         LinearRing linearRing = geometryFactory.createLinearRing(coordinates);
         _nativeGeometry = geometryFactory.createPolygon(linearRing);
@@ -345,17 +331,29 @@ public class SXFPassport {
     }
 
     public Geometry getNativeGeography() {
+        return getNativeGeography(false);
+    }
+
+    public Geometry getNativeGeography(boolean flipCoordinates) {
         if (_nativeGeograhy != null) {
             return _nativeGeograhy;
         }
         GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE));
 
         Coordinate[] coordinates = new Coordinate[5];
-        coordinates[0] = new Coordinate(bSouthWest, lSouthWest, 0.);
-        coordinates[1] = new Coordinate(bNorthWest, lNorthWest, 0.);
-        coordinates[2] = new Coordinate(bNorthEast, lNorthEast, 0.);
-        coordinates[3] = new Coordinate(bSouthEast, lSouthEast, 0.);
-        coordinates[4] = new Coordinate(bSouthWest, lSouthWest, 0.);
+        if (!flipCoordinates) {
+            coordinates[0] = new Coordinate(bSouthWest, lSouthWest, 0.);
+            coordinates[1] = new Coordinate(bNorthWest, lNorthWest, 0.);
+            coordinates[2] = new Coordinate(bNorthEast, lNorthEast, 0.);
+            coordinates[3] = new Coordinate(bSouthEast, lSouthEast, 0.);
+            coordinates[4] = new Coordinate(bSouthWest, lSouthWest, 0.);
+        } else {
+            coordinates[0] = new Coordinate(lSouthWest, bSouthWest, 0.);
+            coordinates[1] = new Coordinate(lNorthWest, bNorthWest, 0.);
+            coordinates[2] = new Coordinate(lNorthEast, bNorthEast, 0.);
+            coordinates[3] = new Coordinate(lSouthEast, bSouthEast, 0.);
+            coordinates[4] = new Coordinate(lSouthWest, bSouthWest, 0.);
+        }
 
         LinearRing linearRing = geometryFactory.createLinearRing(coordinates);
         _nativeGeograhy = geometryFactory.createPolygon(linearRing);
@@ -363,17 +361,29 @@ public class SXFPassport {
     }
 
     public Geometry getNativeDevice() {
+        return getNativeDevice(false);
+    }
+
+    public Geometry getNativeDevice(boolean flipCoordinates) {
         if (_nativeDevice != null) {
             return _nativeDevice;
         }
         GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE));
 
         Coordinate[] coordinates = new Coordinate[5];
-        coordinates[0] = new Coordinate(xBorderDeviceSouthWest, yBorderDeviceSouthWest, 0.);
-        coordinates[1] = new Coordinate(xBorderDeviceNorthWest, yBorderDeviceNorthWest, 0.);
-        coordinates[2] = new Coordinate(xBorderDeviceNorthEast, yBorderDeviceNorthEast, 0.);
-        coordinates[3] = new Coordinate(xBorderDeviceSouthEast, yBorderDeviceSouthEast, 0.);
-        coordinates[4] = new Coordinate(xBorderDeviceSouthWest, yBorderDeviceSouthWest, 0.);
+        if (!flipCoordinates) {
+            coordinates[0] = new Coordinate(xBorderDeviceSouthWest, yBorderDeviceSouthWest, 0.);
+            coordinates[1] = new Coordinate(xBorderDeviceNorthWest, yBorderDeviceNorthWest, 0.);
+            coordinates[2] = new Coordinate(xBorderDeviceNorthEast, yBorderDeviceNorthEast, 0.);
+            coordinates[3] = new Coordinate(xBorderDeviceSouthEast, yBorderDeviceSouthEast, 0.);
+            coordinates[4] = new Coordinate(xBorderDeviceSouthWest, yBorderDeviceSouthWest, 0.);
+        } else {
+            coordinates[0] = new Coordinate(yBorderDeviceSouthWest, xBorderDeviceSouthWest, 0.);
+            coordinates[1] = new Coordinate(yBorderDeviceNorthWest, xBorderDeviceNorthWest, 0.);
+            coordinates[2] = new Coordinate(yBorderDeviceNorthEast, xBorderDeviceNorthEast, 0.);
+            coordinates[3] = new Coordinate(yBorderDeviceSouthEast, xBorderDeviceSouthEast, 0.);
+            coordinates[4] = new Coordinate(yBorderDeviceSouthWest, xBorderDeviceSouthWest, 0.);
+        }
 
         LinearRing linearRing = geometryFactory.createLinearRing(coordinates);
         _nativeDevice = geometryFactory.createPolygon(linearRing);
@@ -411,7 +421,7 @@ public class SXFPassport {
             System.out.printf("\tClassificator code:\t%d\n", sxfPassport.code);
         } else {
             if (sxfPassport.epsg == 0) {
-                int epsg = SXF.DetectSRID(sxfPassport);
+                int epsg = Utils.detectSRID(sxfPassport);
                 System.out.printf("\tEPSG:\t\t\t%d (Detected from passport constants)\n", epsg);
             } else {
                 System.out.printf("\tEPSG:\t\t\t%d\n", sxfPassport.epsg);

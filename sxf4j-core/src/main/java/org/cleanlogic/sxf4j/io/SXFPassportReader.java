@@ -22,6 +22,7 @@ import java.nio.channels.FileChannel;
 public class SXFPassportReader {
     private RandomAccessFile _randomAccessFile;
     private MappedByteBuffer _mappedByteBuffer;
+    private SXFReaderOptions _sxfReaderOptions;
     private SXFPassport _sxfPassport;
 
     public SXFPassportReader() {}
@@ -40,8 +41,9 @@ public class SXFPassportReader {
         _mappedByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
 
-    public SXFPassportReader(MappedByteBuffer mappedByteBuffer) {
+    public SXFPassportReader(MappedByteBuffer mappedByteBuffer, SXFReaderOptions sxfReaderOptions) {
         _mappedByteBuffer = mappedByteBuffer;
+        _sxfReaderOptions = sxfReaderOptions;
         _mappedByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
 
@@ -64,6 +66,7 @@ public class SXFPassportReader {
         }
 
         _sxfPassport = new SXFPassport();
+        _sxfPassport.isFlipCoordinate = _sxfReaderOptions.flipCoordinates;
         _sxfPassport.identifier = _mappedByteBuffer.getInt();
         if (_sxfPassport.identifier != SXF.FILE_SXF) {
             throw new SXFWrongFormatException("Identifier " + _sxfPassport.identifier + " Is not SXF Format");
@@ -112,17 +115,17 @@ public class SXFPassportReader {
 
         byte[] createDate = new byte[10];
         _mappedByteBuffer.get(createDate);
-        _sxfPassport.createDate = new String(createDate);
+        _sxfPassport.createDate = new String(createDate).trim();
 
         byte[] nomenclature = new byte[24];
         _mappedByteBuffer.get(nomenclature);
-        _sxfPassport.nomenclature = new String(nomenclature);
+        _sxfPassport.nomenclature = new String(nomenclature).trim();
         _sxfPassport.scale = _mappedByteBuffer.getInt();
 
         byte[] name = new byte[26];
         _mappedByteBuffer.get(name);
         try {
-            _sxfPassport.name = new String(name, TextEncoding.IBM866.getName());
+            _sxfPassport.name = new String(name, TextEncoding.IBM866.getName()).trim();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -175,7 +178,7 @@ public class SXFPassportReader {
         _mappedByteBuffer.get(date);
         byte[] sourceInfo = new byte[2];
         _mappedByteBuffer.get(sourceInfo);
-        _sxfPassport.date = new String(date);
+        _sxfPassport.date = new String(date).trim();
         _sxfPassport.materialKind = MapInitKind.fromValue(sourceInfo[0]);
         _sxfPassport.materialType = MapInitType.fromValue(sourceInfo[1]);
         _sxfPassport.magneticAngle = _mappedByteBuffer.getInt() / Math.pow(10., 8.) * 180.0 / Math.PI;
@@ -184,7 +187,7 @@ public class SXFPassportReader {
         _sxfPassport.yearMagneticAngle = _mappedByteBuffer.getInt() / Math.pow(10., 8.) * 180.0 / Math.PI;
         byte[] dateAngle = new byte[10];
         _mappedByteBuffer.get(dateAngle);
-        _sxfPassport.dateAngle = new String(dateAngle);
+        _sxfPassport.dateAngle = new String(dateAngle).trim();
         // Reserve = 10
         _mappedByteBuffer.position(_mappedByteBuffer.position() + 10);
 
@@ -221,17 +224,17 @@ public class SXFPassportReader {
 
         byte[] createDate = new byte[12];
         _mappedByteBuffer.get(createDate);
-        _sxfPassport.createDate = new String(createDate);
+        _sxfPassport.createDate = new String(createDate).trim();
 
         byte[] nomenclature = new byte[32];
         _mappedByteBuffer.get(nomenclature);
-        _sxfPassport.nomenclature = new String(nomenclature);
+        _sxfPassport.nomenclature = new String(nomenclature).trim();
         _sxfPassport.scale = _mappedByteBuffer.getInt();
 
         byte[] name = new byte[32];
         _mappedByteBuffer.get(name);
         try {
-            _sxfPassport.name = new String(name, TextEncoding.CP1251.getName());
+            _sxfPassport.name = new String(name, TextEncoding.CP1251.getName()).trim();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -282,7 +285,7 @@ public class SXFPassportReader {
         _mappedByteBuffer.get(date);
         byte[] sourceInfo = new byte[4];
         _mappedByteBuffer.get(sourceInfo);
-        _sxfPassport.date = new String(date);
+        _sxfPassport.date = new String(date).trim();
         _sxfPassport.materialKind = MapInitKind.fromValue(sourceInfo[0]);
         _sxfPassport.materialType = MapInitType.fromValue(sourceInfo[1]);
         _sxfPassport.msk63Ident = sourceInfo[2];
@@ -292,7 +295,7 @@ public class SXFPassportReader {
         _sxfPassport.yearMagneticAngle = _mappedByteBuffer.getDouble() * 180.0 / Math.PI;
         byte[] dateAngle = new byte[12];
         _mappedByteBuffer.get(dateAngle);
-        _sxfPassport.dateAngle = new String(dateAngle);
+        _sxfPassport.dateAngle = new String(dateAngle).trim();
         _sxfPassport.msk63Zone = _mappedByteBuffer.getInt();
         _sxfPassport.reliefHeight = _mappedByteBuffer.getDouble();
 

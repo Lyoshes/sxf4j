@@ -9,6 +9,7 @@ import org.cleanlogic.sxf4j.format.SXFPassport;
 import org.cleanlogic.sxf4j.format.SXFRecordHeader;
 import org.cleanlogic.sxf4j.format.SXFRecordMetric;
 import org.cleanlogic.sxf4j.format.SXFRecordMetricText;
+import org.cleanlogic.sxf4j.utils.Utils;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.MappedByteBuffer;
@@ -28,14 +29,14 @@ public class SXFRecordMetricReader {
         _mappedByteBuffer = mappedByteBuffer;
         _sxfPassport = sxfPassport;
         _sxfReaderOptions = new SXFReaderOptions();
-        _geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), SXF.DetectSRID(sxfPassport));
+        _geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), Utils.detectSRID(sxfPassport));
     }
 
     public SXFRecordMetricReader(MappedByteBuffer mappedByteBuffer, SXFPassport sxfPassport, SXFReaderOptions sxfReaderOptions) {
         _mappedByteBuffer = mappedByteBuffer;
         _sxfPassport = sxfPassport;
         _sxfReaderOptions = sxfReaderOptions;
-        _geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), SXF.DetectSRID(sxfPassport));
+        _geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), Utils.detectSRID(sxfPassport));
     }
 
     public SXFRecordMetric read(SXFRecordHeader sxfRecordHeader) {
@@ -43,8 +44,11 @@ public class SXFRecordMetricReader {
         List<Coordinate> recordCoordinates = new ArrayList<>();
 
         for (int i = 0; i < sxfRecordHeader.pointCount; i++) {
-            Coordinate coordinate = readCoordinate(sxfRecordHeader);
+            Coordinate coordinate = readCoordinate(sxfRecordHeader, _sxfReaderOptions.flipCoordinates);
             coordinate = _sxfPassport.fromDescret(coordinate);
+            if (_sxfReaderOptions.flipCoordinates) {
+                coordinate = new Coordinate(coordinate.y, coordinate.x, coordinate.z);
+            }
             recordCoordinates.add(coordinate);
         }
         // After main metric may be text metric
@@ -62,8 +66,11 @@ public class SXFRecordMetricReader {
             int pointCount = _mappedByteBuffer.getShort();
             List<Coordinate> subrecordCoordinates =  new ArrayList<>();
             for (int k = 0; k < pointCount; k++) {
-                Coordinate coordinate = readCoordinate(sxfRecordHeader);
+                Coordinate coordinate = readCoordinate(sxfRecordHeader, _sxfReaderOptions.flipCoordinates);
                 coordinate = _sxfPassport.fromDescret(coordinate);
+                if (_sxfReaderOptions.flipCoordinates) {
+                    coordinate = new Coordinate(coordinate.y, coordinate.x, coordinate.z);
+                }
                 subrecordCoordinates.add(coordinate);
             }
             subrecordsCoordinates.add(subrecordCoordinates);
@@ -98,7 +105,13 @@ public class SXFRecordMetricReader {
                 sxfRecordMetric.geometry = _geometryFactory.createMultiLineString(lineStrings);
                 break;
             case POINT:
-                sxfRecordMetric.geometry = _geometryFactory.createPoint(recordCoordinates.get(0));
+                Point[] points = new Point[1 + subrecordsCoordinates.size()];
+                points[0] = _geometryFactory.createPoint(recordCoordinates.get(0));
+                for (int i = 0; i < subrecordsCoordinates.size(); i++) {
+                    List<Coordinate> coordinates = subrecordsCoordinates.get(i);
+                    points[i + 1] = _geometryFactory.createPoint(coordinates.get(0));
+                }
+                sxfRecordMetric.geometry = _geometryFactory.createMultiPoint(points);
                 break;
             case SQUARE: {
                 LinearRing shell = _geometryFactory.createLinearRing(recordCoordinates.toArray(new Coordinate[recordCoordinates.size()]));
@@ -121,10 +134,10 @@ public class SXFRecordMetricReader {
      * @param sxfRecordHeader record header.
      * @return {@link Coordinate} in descrets.
      */
-    private Coordinate readCoordinate(SXFRecordHeader sxfRecordHeader) {
+    private Coordinate readCoordinate(SXFRecordHeader sxfRecordHeader, boolean flipCoordinate) {
         double x = 0.;
         double y = 0.;
-        double h = 0.;
+        double z = 0.;
 
         if (!sxfRecordHeader.isFloat) {
             if (sxfRecordHeader.metricElementSize == MetricElementSize.SHORT) {
@@ -136,7 +149,7 @@ public class SXFRecordMetricReader {
             }
 
             if (sxfRecordHeader.is3D) {
-                h = _mappedByteBuffer.getFloat();
+                z = _mappedByteBuffer.getFloat();
             }
         } else {
             if (sxfRecordHeader.metricElementSize == MetricElementSize.FLOAT) {
@@ -144,19 +157,19 @@ public class SXFRecordMetricReader {
                 y = _mappedByteBuffer.getFloat();
 
                 if (sxfRecordHeader.is3D) {
-                    h = _mappedByteBuffer.getFloat();
+                    z = _mappedByteBuffer.getFloat();
                 }
             } else if (sxfRecordHeader.metricElementSize == MetricElementSize.DOUBLE) {
                 x = _mappedByteBuffer.getDouble();
                 y = _mappedByteBuffer.getDouble();
 
                 if (sxfRecordHeader.is3D) {
-                    h = _mappedByteBuffer.getDouble();
+                    z = _mappedByteBuffer.getDouble();
                 }
             }
         }
 
-        return new Coordinate(x, y, h);
+        return new Coordinate(x, y, z);
     }
 
     /**

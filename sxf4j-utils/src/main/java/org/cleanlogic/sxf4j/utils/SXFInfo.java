@@ -33,8 +33,7 @@ public class SXFInfo {
         Option recordCountOption = new Option("c", "count", false, "Print record count");
         options.addOption(recordCountOption);
 
-        Option fileOption = new Option("f", "file", true, "Input SXF file or dir");
-        fileOption.setRequired(true);
+        Option fileOption = new Option("f", "flipCoordinates", false, "Flip coordinates");
         options.addOption(fileOption);
 
         Option sridOption = new Option("s", "srid", true, "Set the SRID field. Defaults to 0.");
@@ -63,7 +62,12 @@ public class SXFInfo {
         try {
             commandLine = commandLineParser.parse(options, args);
 
-            File file = new File(commandLine.getOptionValue("file"));
+            if (commandLine.hasOption("help") || commandLine.getArgList().size() != 1) {
+                helpFormatter.printHelp("sxfinfo [<options>] <sxfile|dir>", options);
+                return;
+            }
+
+            File file = new File(commandLine.getArgList().get(0));
 
             List<File> files = new ArrayList<>();
 
@@ -74,11 +78,12 @@ public class SXFInfo {
                     System.out.println("Record info print not supported on directory mode");
                     return;
                 }
-                search(file, files, ".sxf");
+                Utils.search(file, files, ".sxf");
             }
 
             SXFReaderOptions sxfReaderOptions = new SXFReaderOptions();
             sxfReaderOptions.quite = commandLine.hasOption("quiet");
+            sxfReaderOptions.flipCoordinates = commandLine.hasOption('f');
             if (commandLine.hasOption("srid")) {
                 String srid = commandLine.getOptionValue("srid");
                 if (srid.split(":").length == 2) {
@@ -187,7 +192,7 @@ public class SXFInfo {
             }
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            helpFormatter.printHelp("sxfinfo", options);
+            helpFormatter.printHelp("sxfinfo [<options>] <sxfile|dir>", options);
 
             System.exit(1);
         }
@@ -222,21 +227,5 @@ public class SXFInfo {
             System.out.printf("%s", sxfRecordMetricText.toString());
         }
         System.out.println("}");
-    }
-
-    private static void search(File file, List<File> files, String filter) {
-        File[] listFiles = file.listFiles();
-        if (listFiles == null) {
-            return;
-        }
-        for (File _file : listFiles) {
-            if (_file.isDirectory()) {
-                search(_file, files, filter);
-            } else if (_file.isFile()) {
-                if (_file.getName().toLowerCase().endsWith(filter.toLowerCase())) {
-                    files.add(_file);
-                }
-            }
-        }
     }
 }

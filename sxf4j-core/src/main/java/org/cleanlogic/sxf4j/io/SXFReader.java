@@ -91,7 +91,7 @@ public class SXFReader {
         }
 
         // Read passport of SXF
-        SXFPassportReader sxfPassportReader = new SXFPassportReader(mappedByteBuffer);
+        SXFPassportReader sxfPassportReader = new SXFPassportReader(mappedByteBuffer, _sxfReaderOptions);
         _sxfPassport = sxfPassportReader.read();
 
         SXFDescriptorReader sxfDescriptorReader = new SXFDescriptorReader(mappedByteBuffer);
@@ -99,18 +99,6 @@ public class SXFReader {
 
         SXFRecordReader sxfRecordReader = new SXFRecordReader(mappedByteBuffer, _sxfReaderOptions);
         _sxfRecords = sxfRecordReader.read(_sxfPassport, _sxfDescriptor);
-
-//        SXFRecord borderRecord = getRecordByExcode(_sxfPassport.borderExcode).get(0);
-//        borderRecord.getHeader().print();
-//        System.out.println(SXFRecordMetric.geometryAsWKT(borderRecord.getMetric().geometry, true));
-
-////        int number = 134733;
-//        int number = 3301;
-//        SXFRecord titleRecord = getRecordByNumber(number);
-//        if (titleRecord != null) {
-//            titleRecord.getHeader().print();
-//            System.out.println(SXFRecordMetric.geometryAsWKT(titleRecord.getMetric().geometry, true));
-//        }
 //
 //        // Check for metaobject is exists. It will be first object after descriptor
 //        if (_sxfRecords.size() > 0) {
