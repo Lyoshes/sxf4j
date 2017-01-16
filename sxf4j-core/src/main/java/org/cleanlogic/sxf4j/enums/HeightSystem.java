@@ -120,7 +120,9 @@ public enum HeightSystem {
      * Средний уровень мирового океана
      */
     PEACEOCEAN(27);
-
+    /**
+     * Map contains all enums names. Its will be used in ComboBox's and etc.
+     */
     private static final Map<HeightSystem, String> _names = new HashMap<>();
     static {
         _names.put(UNDEFINED, "Не установлено");
@@ -152,7 +154,9 @@ public enum HeightSystem {
         _names.put(OKHOTSK, "Средний уровень Охотского моря и Тихого океана");
         _names.put(PEACEOCEAN, "Средний уровень мирового океана");
     }
-
+    /**
+     * Map contains integer (value) and enum object.
+     */
     private static final Map<Integer, HeightSystem> _intToEnumMap = new HashMap<>();
     static {
         for (HeightSystem heightSystem : values()) {
@@ -160,28 +164,57 @@ public enum HeightSystem {
         }
     }
 
+    /**
+     * Current value of enum.
+     */
     private final int _value;
 
+    /**
+     * Default constructor.
+     * @param value value of enum.
+     */
     HeightSystem(int value) {
         _value = value;
     }
 
+    /**
+     * Converts from integer value into enum.
+     * @param value integer value of enum.
+     * @return enum by integer.
+     */
     public static HeightSystem fromValue(int value) {
         return _intToEnumMap.get(value);
     }
 
+    /**
+     * Get integer value of enum.
+     * @return integer value.
+     */
     public int getValue() {
         return _value;
     }
 
+    /**
+     * Get name of enum.
+     * @return name of enum.
+     */
     public String getName() {
         return _names.get(this);
     }
 
+    /**
+     * Get list of name of all enums.
+     * @return name list of all enums.
+     */
     public static Map<HeightSystem, String> getNames() {
         return _names;
     }
 
+    /**
+     * Get name of enum
+     * @param heightSystem enum
+     * @return name
+     */
     public static String getName(HeightSystem heightSystem) {
         return _names.get(heightSystem);
     }

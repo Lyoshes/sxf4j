@@ -24,6 +24,9 @@ public enum TextMetricAlign {
     BOTTOM_RIGHT(30),
     BOTTOM_CENTER(31);
 
+    /**
+     * Map contains all enums names. Its will be used in ComboBox's and etc.
+     */
     private static final Map<TextMetricAlign, String> _names = new HashMap<>();
     static {
         _names.put(BASELINE_LEFT, String.valueOf(BASELINE_LEFT));
@@ -42,7 +45,9 @@ public enum TextMetricAlign {
         _names.put(BOTTOM_RIGHT, String.valueOf(BOTTOM_RIGHT));
         _names.put(BOTTOM_CENTER, String.valueOf(BOTTOM_CENTER));
     }
-
+    /**
+     * Map contains integer (value) and enum object.
+     */
     private static final Map<Integer, TextMetricAlign> _intToEnumMap = new HashMap<>();
     static {
         for (TextMetricAlign textMetricAlign : values()) {
@@ -50,28 +55,57 @@ public enum TextMetricAlign {
         }
     }
 
+    /**
+     * Current value of enum.
+     */
     private final int _value;
 
+    /**
+     * Default constructor.
+     * @param value value of enum.
+     */
     TextMetricAlign(int value) {
         _value = value;
     }
 
+    /**
+     * Converts from integer value into enum.
+     * @param value integer value of enum.
+     * @return enum by integer.
+     */
     public static TextMetricAlign fromValue(int value) {
         return _intToEnumMap.get(value);
     }
 
+    /**
+     * Get integer value of enum.
+     * @return integer value.
+     */
     public int getValue() {
         return _value;
     }
 
+    /**
+     * Get name of enum.
+     * @return name of enum.
+     */
     public String getName() {
         return _names.get(this);
     }
 
+    /**
+     * Get list of name of all enums.
+     * @return name list of all enums.
+     */
     public static Map<TextMetricAlign, String> getNames() {
         return _names;
     }
 
+    /**
+     * Get name of enum
+     * @param textMetricAlign enum
+     * @return name
+     */
     public static String getName(TextMetricAlign textMetricAlign) {
         return _names.get(textMetricAlign);
     }

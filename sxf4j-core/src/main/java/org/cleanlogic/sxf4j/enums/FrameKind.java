@@ -36,7 +36,9 @@ public enum FrameKind {
      * Произвольная
      */
     FREE(5);
-
+    /**
+     * Map contains all enums names. Its will be used in ComboBox's and etc.
+     */
     private static final Map<FrameKind, String> _names = new HashMap<>();
     static {
         _names.put(UNDEFINED, "Не установлено");
@@ -47,6 +49,9 @@ public enum FrameKind {
         _names.put(CIRCLE, "Круговая");
         _names.put(FREE, "Произвольная");
     }
+    /**
+     * Map contains integer (value) and enum object.
+     */
     private static final Map<Integer, FrameKind> _intToEnumMap = new HashMap<>();
     static {
         for (FrameKind frameKind : values()) {
@@ -54,27 +59,57 @@ public enum FrameKind {
         }
     }
 
+    /**
+     * Current value of enum.
+     */
     private final int _value;
+
+    /**
+     * Default constructor.
+     * @param value value of enum.
+     */
     FrameKind(int value) {
         _value = value;
     }
 
+    /**
+     * Converts from integer value into enum.
+     * @param value integer value of enum.
+     * @return enum by integer.
+     */
     public static FrameKind fromValue(int value) {
         return _intToEnumMap.get(value);
     }
 
+    /**
+     * Get integer value of enum.
+     * @return integer value.
+     */
     public int getValue() {
         return _value;
     }
 
+    /**
+     * Get name of enum.
+     * @return name of enum.
+     */
     public String getName() {
         return _names.get(this);
     }
 
+    /**
+     * Get list of name of all enums.
+     * @return name list of all enums.
+     */
     public static Map<FrameKind, String> getNames() {
         return _names;
     }
 
+    /**
+     * Get name of enum
+     * @param frameKind enum
+     * @return name
+     */
     public static String getName(FrameKind frameKind) {
         return _names.get(frameKind);
     }

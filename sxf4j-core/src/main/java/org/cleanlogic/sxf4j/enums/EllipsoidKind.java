@@ -212,6 +212,9 @@ public enum EllipsoidKind {
     //KRASOVSKY42_95 = 1001,  // Красовского 1940г. СК-95
     //EC90TEMP       = 1002  // ПЗ-90
 
+    /**
+     * Map contains all enums names. Its will be used in ComboBox's and etc.
+     */
     private static final Map<EllipsoidKind, String> _names = new HashMap<>();
     static {
         _names.put(UNDEFINED, "Не установлено");
@@ -266,34 +269,67 @@ public enum EllipsoidKind {
         _names.put(USERELLIPSOID, "Произвольный (пользовательский) эллипсоид");
     }
 
+    /**
+     * Map contains integer (value) and enum object.
+     */
     private static final Map<Integer, EllipsoidKind> _intToEnumMap = new HashMap<>();
     static {
         for (EllipsoidKind ellipsoidKind : values()) {
             _intToEnumMap.put(ellipsoidKind.getValue(), ellipsoidKind);
         }
     }
-            
+
+    /**
+     * Current value of enum.
+     */
     private final int _value;
+
+    /**
+     * Default constructor.
+     * @param value value of enum.
+     */
     EllipsoidKind(int value) {
         _value = value;
     }
 
+    /**
+     * Converts from integer value into enum.
+     * @param value integer value of enum.
+     * @return enum by integer.
+     */
     public static EllipsoidKind fromValue(int value) {
         return _intToEnumMap.get(value);
     }
 
+    /**
+     * Get integer value of enum.
+     * @return integer value.
+     */
     public int getValue() {
         return _value;
     }
 
+    /**
+     * Get name of enum.
+     * @return name of enum.
+     */
     public String getName() {
         return _names.get(this);
     }
 
+    /**
+     * Get list of name of all enums.
+     * @return name list of all enums.
+     */
     public static Map<EllipsoidKind, String> getNames() {
         return _names;
     }
 
+    /**
+     * Get name of enum
+     * @param ellipsoidKind enum
+     * @return name
+     */
     public static String getName(EllipsoidKind ellipsoidKind) {
         return _names.get(ellipsoidKind);
     }

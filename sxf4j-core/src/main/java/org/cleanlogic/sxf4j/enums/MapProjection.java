@@ -161,6 +161,9 @@ public enum MapProjection {
      */
     LASTPROJECTIONNUMBER(36);
 
+    /**
+     * Map contains all enums names. Its will be used in ComboBox's and etc.
+     */
     private static final Map<MapProjection, String> _names = new HashMap<>();
     static {
         _names.put(UNDEFINED, "Не установлено");
@@ -202,7 +205,9 @@ public enum MapProjection {
         _names.put(MERCATOR_2SP, "Цилиндрическая прямая равноугольная Меркатора");
         _names.put(LASTPROJECTIONNUMBER, "Крайний номер проекции");
     }
-
+    /**
+     * Map contains integer (value) and enum object.
+     */
     private static final Map<Integer, MapProjection> _intToEnumMap = new HashMap<>();
     static {
         for (MapProjection mapProjection : values()) {
@@ -210,28 +215,57 @@ public enum MapProjection {
         }
     }
 
+    /**
+     * Current value of enum.
+     */
     private final int _value;
 
+    /**
+     * Default constructor.
+     * @param value value of enum.
+     */
     MapProjection(int value) {
         _value = value;
     }
 
+    /**
+     * Converts from integer value into enum.
+     * @param value integer value of enum.
+     * @return enum by integer.
+     */
     public static MapProjection fromValue(int value) {
         return _intToEnumMap.get(value);
     }
 
+    /**
+     * Get integer value of enum.
+     * @return integer value.
+     */
     public int getValue() {
         return _value;
     }
 
+    /**
+     * Get name of enum.
+     * @return name of enum.
+     */
     public String getName() {
         return _names.get(this);
     }
 
+    /**
+     * Get list of name of all enums.
+     * @return name list of all enums.
+     */
     public static Map<MapProjection, String> getNames() {
         return _names;
     }
 
+    /**
+     * Get name of enum
+     * @param mapProjection enum
+     * @return name
+     */
     public static String getName(MapProjection mapProjection) {
         return _names.get(mapProjection);
     }

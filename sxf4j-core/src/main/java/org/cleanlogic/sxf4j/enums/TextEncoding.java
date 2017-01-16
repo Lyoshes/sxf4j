@@ -24,6 +24,9 @@ public enum TextEncoding {
      */
     KOI8R;
 
+    /**
+     * Map contains all enums names. Its will be used in ComboBox's and etc.
+     */
     private static final Map<TextEncoding, String> _names = new HashMap<>();
     static {
         _names.put(IBM866, String.valueOf(IBM866));
@@ -31,18 +34,36 @@ public enum TextEncoding {
         _names.put(KOI8R, "KOI8-R");
     }
 
+    /**
+     * Converts from integer value into enum.
+     * @param value integer value of enum.
+     * @return enum by integer.
+     */
     public static TextEncoding fromValue(int value) {
         return values()[value];
     }
 
+    /**
+     * Get name of enum.
+     * @return name of enum.
+     */
     public String getName() {
         return _names.get(this);
     }
 
+    /**
+     * Get list of name of all enums.
+     * @return name list of all enums.
+     */
     public static Map<TextEncoding, String> getNames() {
         return _names;
     }
 
+    /**
+     * Get name of enum
+     * @param textEncoding enum
+     * @return name
+     */
     public static String getName(TextEncoding textEncoding) {
         return _names.get(textEncoding);
     }

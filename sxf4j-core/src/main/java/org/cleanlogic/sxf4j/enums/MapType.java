@@ -101,6 +101,9 @@ public enum MapType {
      */
     MAPTYPELIMIT(21);
 
+    /**
+     * Map contains all enums names. Its will be used in ComboBox's and etc.
+     */
     private static final Map<MapType, String> _names = new HashMap<>();
     static {
         _names.put(UNDEFINED, "Не установлено");
@@ -127,7 +130,9 @@ public enum MapType {
         _names.put(GSKMAP, "Карта в системе координат ГСК-2011");
         _names.put(MAPTYPELIMIT, "Крайнее значение типа карты");
     }
-
+    /**
+     * Map contains integer (value) and enum object.
+     */
     private static final Map<Integer, MapType> _intToEnumMap = new HashMap<>();
     static {
         for (MapType mapType : values()) {
@@ -135,28 +140,57 @@ public enum MapType {
         }
     }
 
+    /**
+     * Current value of enum.
+     */
     private final int _value;
 
+    /**
+     * Default constructor.
+     * @param value value of enum.
+     */
     MapType(int value) {
         _value = value;
     }
 
+    /**
+     * Converts from integer value into enum.
+     * @param value integer value of enum.
+     * @return enum by integer.
+     */
     public static MapType fromValue(int value) {
         return _intToEnumMap.get(value);
     }
 
+    /**
+     * Get integer value of enum.
+     * @return integer value.
+     */
     public int getValue() {
         return _value;
     }
 
+    /**
+     * Get name of enum.
+     * @return name of enum.
+     */
     public String getName() {
         return _names.get(this);
     }
 
+    /**
+     * Get list of name of all enums.
+     * @return name list of all enums.
+     */
     public static Map<MapType, String> getNames() {
         return _names;
     }
 
+    /**
+     * Get name of enum
+     * @param mapType enum
+     * @return name
+     */
     public static String getName(MapType mapType) {
         return _names.get(mapType);
     }

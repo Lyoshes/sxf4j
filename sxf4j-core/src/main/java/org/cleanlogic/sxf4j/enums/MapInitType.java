@@ -74,6 +74,9 @@ public enum MapInitType {
      */
     PHOTOGRAM(66);
 
+    /**
+     * Map contains all enums names. Its will be used in ComboBox's and etc.
+     */
     private static final Map<MapInitType, String> _names = new HashMap<>();
     static {
         _names.put(UNDEFINED, "Не установлено");
@@ -94,6 +97,9 @@ public enum MapInitType {
         _names.put(AERO, "Аэроснимки");
         _names.put(PHOTOGRAM, "Фототеодолитные снимки");
     }
+    /**
+     * Map contains integer (value) and enum object.
+     */
     private static final Map<Integer, MapInitType> _intToEnumMap = new HashMap<>();
     static {
         for (MapInitType mapInitType : values()) {
@@ -101,31 +107,57 @@ public enum MapInitType {
         }
     }
 
+    /**
+     * Current value of enum.
+     */
     private final int _value;
 
+    /**
+     * Default constructor.
+     * @param value value of enum.
+     */
     MapInitType(int value) {
         _value = value;
     }
 
+    /**
+     * Converts from integer value into enum.
+     * @param value integer value of enum.
+     * @return enum by integer.
+     */
     public static MapInitType fromValue(int value) {
-        if (!_intToEnumMap.containsKey(value)) {
-            return MAPRUN;
-        }
         return _intToEnumMap.get(value);
     }
 
+    /**
+     * Get integer value of enum.
+     * @return integer value.
+     */
     public int getValue() {
         return _value;
     }
 
+    /**
+     * Get name of enum.
+     * @return name of enum.
+     */
     public String getName() {
         return _names.get(this);
     }
 
+    /**
+     * Get list of name of all enums.
+     * @return name list of all enums.
+     */
     public static Map<MapInitType, String> getNames() {
         return _names;
     }
 
+    /**
+     * Get name of enum
+     * @param mapInitType enum
+     * @return name
+     */
     public static String getName(MapInitType mapInitType) {
         return _names.get(mapInitType);
     }
