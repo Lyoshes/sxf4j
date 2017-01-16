@@ -12,7 +12,7 @@ import java.nio.MappedByteBuffer;
 /**
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
-public class SXFDescriptorReader {
+class SXFDescriptorReader {
     private MappedByteBuffer _mappedByteBuffer;
     private  SXFDescriptor _sxfDescriptor;
 
