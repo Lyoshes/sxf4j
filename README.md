@@ -58,11 +58,11 @@ Dependes:
  ### sxf2pgsql [\<options\>] <sxfile|dir> [[\<schema\>.]\<table\>]
  `./bin/sxf2pgsql.sh -d -s 4326 /Users/iserge/Develop/Map/500\ 000 | psql -U postgres sxf`
  
- ![separated](https://github.com/iSergio/sxf4j/images/sxf2pgsql.png)
+ ![separated](https://github.com/iSergio/sxf4j/blob/master/images/sxf2pgsql.png?raw=true)
  
  `./bin/sxf2pgsql.sh -s 4326 /Users/iserge/Develop/Map/1\ 000\ 000 1kk | psql -U postgres sxf -q`
  
- ![many2one](https://github.com/iSergio/sxf4j/images/sxf2pgsql-many2one.png)
+ ![many2one](https://github.com/iSergio/sxf4j/blob/master/images/sxf2pgsql-many2one.png?raw=true)
  
  ### Command line flags:
  |Flag|Description|Required|
