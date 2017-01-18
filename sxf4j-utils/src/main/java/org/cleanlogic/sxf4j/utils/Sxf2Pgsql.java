@@ -7,6 +7,7 @@ import org.cleanlogic.sxf4j.enums.Local;
 import org.cleanlogic.sxf4j.format.SXFPassport;
 import org.cleanlogic.sxf4j.format.SXFRecord;
 import org.cleanlogic.sxf4j.format.SXFRecordHeader;
+import org.cleanlogic.sxf4j.format.SXFRecordSemantic;
 import org.cleanlogic.sxf4j.io.SXFReader;
 import org.cleanlogic.sxf4j.io.SXFReaderOptions;
 
@@ -18,13 +19,15 @@ import java.util.List;
 /**
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
-public class SXF2Pgsql {
-    static class Sxf2PgsqlOptions {
+public class Sxf2Pgsql {
+    private static class Sxf2PgsqlOptions {
         String schemaName = "public";
         String tableName = "";
 
         int srcSRID = 0;
         int dstSRID = 0;
+        boolean stTransform = false;
+
         String geocolumnName = "geom";
         boolean transaction = true;
         boolean spatialIndex = false;
@@ -33,7 +36,7 @@ public class SXF2Pgsql {
         boolean createTable = true;
         boolean dropTable = false;
     }
-    static Sxf2PgsqlOptions sxf2PgsqlOptions = new Sxf2PgsqlOptions();
+    private static Sxf2PgsqlOptions sxf2PgsqlOptions = new Sxf2PgsqlOptions();
 
     public static void main(String... args) {
         Options options = new Options();
@@ -41,6 +44,9 @@ public class SXF2Pgsql {
         Option sridOption = new Option("s", true, "Set the SRID field. Defaults to detect from passport or 0. Optionally reprojects from given SRID");
         sridOption.setArgName("[<from>:]<srid>");
         options.addOption(sridOption);
+
+        Option stTransformOption = new Option("t", false, "Use only PostGIS coordinates transform (ST_Transform), Use with -s option. Not worked with -D. Default: client side convert (Slow).");
+        options.addOption(stTransformOption);
 
         Option geometryColumnOption = new Option("g", true, "Specify the name of the geometry/geography column");
         geometryColumnOption.setArgName("geocolumn");
@@ -97,6 +103,7 @@ public class SXF2Pgsql {
                     sxf2PgsqlOptions.dstSRID = Integer.parseInt(srid);
                 }
             }
+            sxf2PgsqlOptions.stTransform = commandLine.hasOption('t');
             sxf2PgsqlOptions.dropTable = commandLine.hasOption('d');
             if (commandLine.hasOption('g')) {
                 sxf2PgsqlOptions.geocolumnName = commandLine.getOptionValue('g');
@@ -120,50 +127,70 @@ public class SXF2Pgsql {
                     Utils.search(file, files, ".sxf");
                 }
             }
-            if (commandLine.getArgList().size() >= 2) {
+            boolean useNomenclature = true;
+            if (commandLine.getArgList().size() == 2) {
                 String[] schemaTablePair = commandLine.getArgList().get(1).split(".");
                 if (schemaTablePair.length == 2) {
                     sxf2PgsqlOptions.schemaName = schemaTablePair[0];
                     sxf2PgsqlOptions.tableName = schemaTablePair[1];
-                } else if (schemaTablePair.length == 1) {
-                    sxf2PgsqlOptions.schemaName = schemaTablePair[0];
+                } else if (schemaTablePair.length == 0) {
+                    sxf2PgsqlOptions.tableName = commandLine.getArgList().get(1);
                 }
+                useNomenclature = false;
             }
 
             SXFReaderOptions sxfReaderOptions = new SXFReaderOptions();
             sxfReaderOptions.flipCoordinates = true;
+            if (!commandLine.hasOption("t")) {
+                sxfReaderOptions.dstSRID = sxf2PgsqlOptions.dstSRID;
+            }
             SXFReader sxfReader = new SXFReader(sxfReaderOptions);
+
+            // Begin document
+            System.out.printf("SET CLIENT_ENCODING TO UTF8;\n");
+            System.out.printf("SET STANDARD_CONFORMING_STRINGS TO ON;\n");
+            // Create schema.table at once (use from command line params)
+            if (sxf2PgsqlOptions.dropTable) {
+                System.out.printf(dropTables());
+            }
+            // Single table mode
+            if (!useNomenclature) {
+                if (sxf2PgsqlOptions.transaction) {
+                    System.out.printf("BEGIN;\n");
+                }
+                System.out.printf(createTables());
+            }
+
             for (File file : files) {
                 try {
                     sxfReader.read(file);
                     SXFPassport sxfPassport = sxfReader.getPassport();
-                    sxf2PgsqlOptions.srcSRID = Utils.detectSRID(sxfPassport);
-                    if (sxf2PgsqlOptions.tableName.isEmpty()) {
+
+                    // Each file in separate transaction
+                    if (useNomenclature) {
                         sxf2PgsqlOptions.tableName = sxfPassport.nomenclature;
+                        int srid = Utils.detectSRID(sxfPassport);
+                        if (srid != 0) {
+                            sxf2PgsqlOptions.srcSRID = srid;
+                        }
+                        System.out.printf(createTables());
                     }
-                    StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("SET CLIENT_ENCODING TO UTF8;\n");
-                    stringBuilder.append("SET STANDARD_CONFORMING_STRINGS TO ON;\n");
-                    if (sxf2PgsqlOptions.dropTable) {
-                        stringBuilder.append(dropTables());
+                    for (SXFRecord sxfRecord : sxfReader.getRecords()) {
+                        System.out.print(createInsert(sxfRecord));
                     }
-                    if (sxf2PgsqlOptions.transaction) {
-                        stringBuilder.append("BEGIN;\n");
+                    if (useNomenclature) {
+                        System.out.printf("END;\n");
                     }
-                    stringBuilder.append(createTables());
-                    stringBuilder.append(createInserts(sxfReader.getRecords()));
-                    if (sxf2PgsqlOptions.transaction) {
-                        stringBuilder.append("END;\n");
-                    }
-                    System.out.printf(stringBuilder.toString());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+            if (sxf2PgsqlOptions.transaction) {
+                System.out.printf("END;\n");
+            }
 
             if (commandLine.hasOption("help") || commandLine.getArgList().size() == 0) {
                 helpFormatter.printHelp("sxf2pgsql [<options>] <sxfile|dir> [[<schema>.]<table>]", options);
-                return;
             }
         } catch (ParseException e) {
             System.out.println(e.getMessage());
@@ -173,7 +200,7 @@ public class SXF2Pgsql {
         }
     }
 
-    public static String dropTables() {
+    private static String dropTables() {
         StringBuilder stringBuilder = new StringBuilder();
         for (Local local : Local.values()) {
             String schemaName = sxf2PgsqlOptions.schemaName;
@@ -189,7 +216,7 @@ public class SXF2Pgsql {
         return stringBuilder.toString();
     }
 
-    public static String createTables() {
+    private static String createTables() {
         StringBuilder stringBuilder = new StringBuilder();
         for (Local local : Local.values()) {
             String schemaName = sxf2PgsqlOptions.schemaName;
@@ -205,31 +232,34 @@ public class SXF2Pgsql {
                     schemaName,
                     tableName,
                     sxf2PgsqlOptions.geocolumnName,
-                    sxf2PgsqlOptions.srcSRID,
+                    sxf2PgsqlOptions.dstSRID,
                     geometryType,
                     3));
         }
         return stringBuilder.toString();
     }
 
-    public static String createInserts(List<SXFRecord> sxfRecords) {
+    private static String createInsert(SXFRecord sxfRecord) {
         StringBuilder stringBuilder = new StringBuilder();
 
         String schemaName = sxf2PgsqlOptions.schemaName;
-        for (SXFRecord sxfRecord : sxfRecords) {
-            SXFRecordHeader sxfRecordHeader = sxfRecord.getHeader();
-            String tableName = String.format("%s_%s", sxf2PgsqlOptions.tableName, sxfRecordHeader.local);
-            stringBuilder.append(String.format("INSERT INTO \"%s\".\"%s\" ", schemaName, tableName));
-            stringBuilder.append(String.format("(\"excode\", \"number\", \"text\", \"semantics\", %s) ", sxf2PgsqlOptions.geocolumnName));
-            stringBuilder.append("VALUES ");
-            stringBuilder.append("(");
-            stringBuilder.append(String.format("'%d',", sxfRecordHeader.excode));
-            stringBuilder.append(String.format("'%d',", sxfRecordHeader.number));
-            stringBuilder.append(String.format("'%s',", "text"));
-            stringBuilder.append(String.format("'{%s}'::varchar[],", "semantics"));
-            stringBuilder.append(String.format("'%s'", sxfRecord.getMetric().geometryAsWKB()));
-            stringBuilder.append(");\n");
+        SXFRecordHeader sxfRecordHeader = sxfRecord.getHeader();
+        String tableName = String.format("%s_%s", sxf2PgsqlOptions.tableName, sxfRecordHeader.local);
+        stringBuilder.append(String.format("INSERT INTO \"%s\".\"%s\" ", schemaName, tableName));
+        stringBuilder.append(String.format("(\"excode\", \"number\", \"text\", \"semantics\", %s) ", sxf2PgsqlOptions.geocolumnName));
+        stringBuilder.append("VALUES ");
+        stringBuilder.append("(");
+        stringBuilder.append(String.format("'%d',", sxfRecordHeader.excode));
+        stringBuilder.append(String.format("'%d',", sxfRecordHeader.number));
+        stringBuilder.append(String.format("'%s',", "text"));
+        stringBuilder.append(String.format("'%s'::varchar[],", semanticsToPgArray(sxfRecord.getSemantics())));
+        if (sxf2PgsqlOptions.stTransform) {
+            stringBuilder.append(String.format("ST_Transform('%s'::geometry, %d)", Utils.geometryAsWKB(sxfRecord.getMetric().getGeometry()), sxf2PgsqlOptions.dstSRID));
+        } else {
+            stringBuilder.append(String.format("'%s'", Utils.geometryAsWKB(sxfRecord.getMetric().getGeometry())));
         }
+        stringBuilder.append(");\n");
+        sxfRecord.destroy();
 
         return stringBuilder.toString();
     }
@@ -246,5 +276,25 @@ public class SXF2Pgsql {
             default: break;
         }
         return geometryType;
+    }
+
+    private static String semanticsToPgArray(List<SXFRecordSemantic> sxfRecordSemantics) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("{");
+        for (int i = 0; i < sxfRecordSemantics.size(); i++) {
+            SXFRecordSemantic sxfRecordSemantic = sxfRecordSemantics.get(i);
+            if (i != 0) {
+                stringBuilder.append(",");
+            }
+            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\\", "\\\\\\");
+            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\n", "\\\\n");
+            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\r", "\\\\r");
+            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\t", "\\\\t");
+            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\"", "\\\"");
+            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("'", "''");
+            stringBuilder.append(String.format("{\"%s\",\"%s\"}", sxfRecordSemantic.code, sxfRecordSemantic.value));
+        }
+        stringBuilder.append("}");
+        return stringBuilder.toString();
     }
 }
