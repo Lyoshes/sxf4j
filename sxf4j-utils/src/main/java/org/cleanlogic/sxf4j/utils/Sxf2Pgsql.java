@@ -33,8 +33,11 @@ public class Sxf2Pgsql {
         boolean spatialIndex = false;
         String geometryFormat = "WKB";
         String encoding = "UTF-8";
+
         boolean createTable = true;
         boolean dropTable = false;
+
+        boolean pgdumpFormat = false;
     }
     private static Sxf2PgsqlOptions sxf2PgsqlOptions = new Sxf2PgsqlOptions();
 
@@ -51,6 +54,9 @@ public class Sxf2Pgsql {
         Option geometryColumnOption = new Option("g", true, "Specify the name of the geometry/geography column");
         geometryColumnOption.setArgName("geocolumn");
         options.addOption(geometryColumnOption);
+
+        Option pgdumpFormatOption = new Option("D", false, "Use postgresql dump format (defaults to SQL insert statements).");
+        options.addOption(pgdumpFormatOption);
 
         Option transactionOption = new Option("e", false, "Execute each statement individually, do not use a transaction. Not compatible with -D.");
         options.addOption(transactionOption);
@@ -168,6 +174,9 @@ public class Sxf2Pgsql {
 
                     // Each file in separate transaction
                     if (useNomenclature) {
+                        if (sxf2PgsqlOptions.transaction) {
+                            System.out.printf("BEGIN;\n");
+                        }
                         sxf2PgsqlOptions.tableName = sxfPassport.nomenclature;
                         int srid = Utils.detectSRID(sxfPassport);
                         if (srid != 0) {
@@ -179,14 +188,30 @@ public class Sxf2Pgsql {
                         System.out.print(createInsert(sxfRecord));
                     }
                     if (useNomenclature) {
+                        if (sxf2PgsqlOptions.spatialIndex) {
+                            System.out.printf("CREATE INDEX \"indx_%s\" ON \"%s\".\"%s\" USING GIST (\"%s\");\n",
+                                    sxf2PgsqlOptions.tableName.toLowerCase(),
+                                    sxf2PgsqlOptions.schemaName,
+                                    sxf2PgsqlOptions.tableName,
+                                    sxf2PgsqlOptions.geocolumnName);
+                        }
                         System.out.printf("END;\n");
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            if (sxf2PgsqlOptions.transaction) {
-                System.out.printf("END;\n");
+            if (!useNomenclature) {
+                if (sxf2PgsqlOptions.spatialIndex) {
+                    System.out.printf("CREATE INDEX \"indx_%s\" ON \"%s\".\"%s\" USING GIST (\"%s\");\n",
+                            sxf2PgsqlOptions.tableName.toLowerCase(),
+                            sxf2PgsqlOptions.schemaName,
+                            sxf2PgsqlOptions.tableName,
+                            sxf2PgsqlOptions.geocolumnName);
+                }
+                if (sxf2PgsqlOptions.transaction) {
+                    System.out.printf("END;\n");
+                }
             }
 
             if (commandLine.hasOption("help") || commandLine.getArgList().size() == 0) {
