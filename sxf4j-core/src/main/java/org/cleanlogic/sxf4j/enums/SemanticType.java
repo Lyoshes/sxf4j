@@ -24,6 +24,10 @@ public enum SemanticType {
      */
     STRUNI(127),
     /**
+     * Строка переменной длинны в UTF-16
+     */
+    STRUTF16(128),
+    /**
      * 1 БАЙТ SIGNED CHAR
      */
     CHAR (1),
@@ -48,6 +52,8 @@ public enum SemanticType {
         _names.put(STRDOS, "CТРОКА СИМВОЛОВ (ASCIIZ),ОГРАНИЧЕННАЯ НУЛЕМ");
         _names.put(STRING, "CТРОКА СИМВОЛОВ (ANSI),ОГРАНИЧЕННАЯ НУЛЕМ");
         _names.put(STRUNI, "CТРОКА СИМВОЛОВ (UNICODE),ОГРАНИЧЕННАЯ НУЛЕМ");
+        _names.put(STRUTF16, "СТРОКА ПЕРЕМЕННОЙ ДЛИННЫ В UTF-16");
+        _names.put(CHAR, "2 БАЙТA SIGNED SHORT");
         _names.put(SHORT, "2 БАЙТA SIGNED SHORT");
         _names.put(LONG, "4 БАЙТA SIGNED INT");
         _names.put(DOUBLE, "8 БАЙТ DOUBLE");
