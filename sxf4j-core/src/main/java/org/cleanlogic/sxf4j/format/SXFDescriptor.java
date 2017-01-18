@@ -1,6 +1,7 @@
 package org.cleanlogic.sxf4j.format;
 
 import org.cleanlogic.sxf4j.SXF;
+import org.cleanlogic.sxf4j.enums.Projection;
 import org.cleanlogic.sxf4j.enums.Secrecy;
 import org.cleanlogic.sxf4j.enums.TextEncoding;
 
@@ -34,7 +35,7 @@ public class SXFDescriptor {
     /**
      * Projection of condition coordinates data.
      */
-    public boolean dataProjectionFlag;
+    public Projection projectionFlag;
     /**
      * Real coordinates.
      */
@@ -70,7 +71,7 @@ public class SXFDescriptor {
         System.out.printf("\tRecord count:\t%d\n", sxfDescriptor.recordCount);
         System.out.printf("\tInfoFlags:\n");
         System.out.printf("\t\tConditionFlag:\t\t%d\n", sxfDescriptor.conditionFlag);
-        System.out.printf("\t\tProjection flag:\t%b\n", sxfDescriptor.dataProjectionFlag);
+        System.out.printf("\t\tProjection flag:\t%s (%s)\n", sxfDescriptor.projectionFlag, sxfDescriptor.projectionFlag.getName());
         System.out.printf("\t\tRealCoordinatesFlag:\t%d\n", sxfDescriptor.realPlaceFlag);
         System.out.printf("\t\tCodeTypeFlag:\t\t%d\n", sxfDescriptor.codeTypeFlag);
         System.out.printf("\t\tGeneralizationFlag:\t%d\n", sxfDescriptor.generalizationFlag);
