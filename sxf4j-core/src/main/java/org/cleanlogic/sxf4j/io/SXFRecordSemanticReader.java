@@ -29,51 +29,98 @@ public class SXFRecordSemanticReader {
 
         while (totalBytes > 0) {
             SXFRecordSemantic sxfRecordSemantic = new SXFRecordSemantic();
+
             sxfRecordSemantic.code = _mappedByteBuffer.getShort();
             byte[] lengthCode = new byte[2];
             _mappedByteBuffer.get(lengthCode);
-            sxfRecordSemantic.type = SemanticType.fromValue(lengthCode[0]);
-            sxfRecordSemantic.scale = (int) lengthCode[1];
+            int type = lengthCode[0];
+            int scale = lengthCode[1];
+            // Bytes left to read
             totalBytes -= 4;
 
-            switch (sxfRecordSemantic.type) {
-                case STRDOS:
-                case STRING:
-                case STRUNI: {
-                    Charset charset;
-                    switch (sxfRecordSemantic.type) {
-                        case STRDOS: charset = Charset.forName(TextEncoding.IBM866.getName()); break;
-                        case STRING: charset = Charset.forName(TextEncoding.CP1251.getName()); break;
-                        case STRUNI: charset = Charset.forName(TextEncoding.KOI8R.getName()); break;
-                        default: charset = Charset.forName("UTF-8");
-                    }
+            if (type == 128 && scale == 255) {
+                // This is dynamic length string
+                int length = _mappedByteBuffer.getInt();
+                // Bytes left to read
+                totalBytes -= 4;
+                byte[] string = new byte[length];
+                _mappedByteBuffer.get(string);
+                // Bytes left to read
+                totalBytes -= length;
+                sxfRecordSemantic.type = SemanticType.fromValue(type);
+                sxfRecordSemantic.scale = scale;
+                sxfRecordSemantic.value = new String(string).trim();
+            } else {
+                sxfRecordSemantic.type = SemanticType.fromValue(type);
+                sxfRecordSemantic.scale = scale;
+                if (sxfRecordSemantic.type == null) {
+                    break;
+                }
 
-                    byte[] string = new byte[sxfRecordSemantic.scale + 1];
-                    _mappedByteBuffer.get(string);
-                    sxfRecordSemantic.value = new String(string, charset);
-                    totalBytes -= (sxfRecordSemantic.scale + 1);
-                } break;
-                case CHAR: {
-                    char value = _mappedByteBuffer.getChar();
-                    sxfRecordSemantic.value = String.valueOf((int) value * Math.pow(10., sxfRecordSemantic.scale));
-                    totalBytes -= 1;
-                } break;
-                case SHORT: {
-                    short value = _mappedByteBuffer.getShort();
-                    sxfRecordSemantic.value = String.valueOf(value * Math.pow(10., sxfRecordSemantic.scale));
-                    totalBytes -= 2;
-                } break;
-                case LONG: {
-                    int value = _mappedByteBuffer.getInt();
-                    sxfRecordSemantic.value = String.valueOf(value * Math.pow(10., sxfRecordSemantic.scale));
-                    totalBytes -= 4;
-                } break;
-                case DOUBLE: {
-                    double value = _mappedByteBuffer.getDouble();
-                    sxfRecordSemantic.value = String.valueOf(value * Math.pow(10., sxfRecordSemantic.scale));
-                    totalBytes -= 8;
-                } break;
-                default: break;
+                if (sxfRecordSemantic.type == SemanticType.CHAR || sxfRecordSemantic.type == SemanticType.SHORT ||
+                        sxfRecordSemantic.type == SemanticType.DOUBLE || sxfRecordSemantic.type == SemanticType.LONG) {
+                    if (sxfRecordSemantic.scale < -127 || sxfRecordSemantic.scale > 127) {
+                        break;
+                    }
+                } else {
+                    if (sxfRecordSemantic.scale > 255) {
+                        break;
+                    } else if (sxfRecordSemantic.scale + 1 < 0) {
+                        break;
+                    }
+                }
+
+                switch (sxfRecordSemantic.type) {
+                    case STRDOS:
+                    case STRING:
+                    case STRUNI: {
+                        Charset charset;
+                        switch (sxfRecordSemantic.type) {
+                            case STRDOS:
+                                charset = Charset.forName(TextEncoding.IBM866.getName());
+                                break;
+                            case STRING:
+                                charset = Charset.forName(TextEncoding.CP1251.getName());
+                                break;
+                            case STRUNI:
+                                charset = Charset.forName(TextEncoding.KOI8R.getName());
+                                break;
+                            default:
+                                charset = Charset.forName("UTF-8");
+                        }
+                        byte[] string = new byte[sxfRecordSemantic.scale + 1];
+                        _mappedByteBuffer.get(string);
+                        sxfRecordSemantic.value = new String(string, charset).trim();
+                        totalBytes -= (sxfRecordSemantic.scale + 1);
+                    }
+                    break;
+                    case CHAR: {
+                        byte value = _mappedByteBuffer.get();
+                        sxfRecordSemantic.value = String.valueOf((int) value * Math.pow(10., sxfRecordSemantic.scale));
+                        totalBytes -= 1;
+                    }
+                    break;
+                    case SHORT: {
+                        short value = _mappedByteBuffer.getShort();
+                        sxfRecordSemantic.value = String.valueOf(value * Math.pow(10., sxfRecordSemantic.scale));
+                        totalBytes -= 2;
+                    }
+                    break;
+                    case LONG: {
+                        int value = _mappedByteBuffer.getInt();
+                        sxfRecordSemantic.value = String.valueOf(value * Math.pow(10., sxfRecordSemantic.scale));
+                        totalBytes -= 4;
+                    }
+                    break;
+                    case DOUBLE: {
+                        double value = _mappedByteBuffer.getDouble();
+                        sxfRecordSemantic.value = String.valueOf(value * Math.pow(10., sxfRecordSemantic.scale));
+                        totalBytes -= 8;
+                    }
+                    break;
+                    default:
+                        break;
+                }
             }
             sxfRecordSemantics.add(sxfRecordSemantic);
         }
