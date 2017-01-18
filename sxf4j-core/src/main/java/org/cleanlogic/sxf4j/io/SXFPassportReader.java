@@ -47,11 +47,6 @@ public class SXFPassportReader {
         _mappedByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
 
-
-    public MappedByteBuffer getMappedByteBuffer() {
-        return _mappedByteBuffer;
-    }
-
     /**
      * Process read SXF passport
      * @return SXFPassport which will be read
@@ -65,7 +60,7 @@ public class SXFPassportReader {
             _sxfPassport = null;
         }
 
-        _sxfPassport = new SXFPassport();
+        _sxfPassport = new SXFPassport(_mappedByteBuffer, _sxfReaderOptions);
         _sxfPassport.isFlipCoordinate = _sxfReaderOptions.flipCoordinates;
         _sxfPassport.identifier = _mappedByteBuffer.getInt();
         if (_sxfPassport.identifier != SXF.FILE_SXF) {
@@ -133,7 +128,7 @@ public class SXFPassportReader {
         byte[] infoFlags = new byte[4];
         _mappedByteBuffer.get(infoFlags);
         _sxfPassport.conditionFlag = infoFlags[0] & 0x3;
-        _sxfPassport.dataProjectionFlag = (((infoFlags[0] >> 2) & 0x1) == 1);
+        _sxfPassport.projectionFlag = Projection.fromValue((infoFlags[0] >> 2) & 0x1);
         _sxfPassport.realPlaceFlag = (infoFlags[0] >> 3) & 0x3;
         _sxfPassport.codeTypeFlag = (infoFlags[0] >> 5) & 0x3;
         _sxfPassport.generalizationFlag = (infoFlags[0] >> 7) & 0x1;

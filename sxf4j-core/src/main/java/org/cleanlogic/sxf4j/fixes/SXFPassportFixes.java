@@ -80,32 +80,31 @@ public class SXFPassportFixes {
 
     /**
      * Sets offset start coordinate system, if passport border not equals record border (excode = 91000000) or metaobject (number = 0 excode = 0 incode = 1)
-     * @param mappedByteBuffer
      * @param sxfPassport
      * @param sxfRecordHeader
-     * @param sxfReaderOptions
      */
-    public static void FisxBorderRecordOffset(MappedByteBuffer mappedByteBuffer, SXFPassport sxfPassport, SXFRecordHeader sxfRecordHeader, SXFReaderOptions sxfReaderOptions) {
-            // Store current reader position
-            int position = mappedByteBuffer.position();
-            SXFRecord sxfRecord = new SXFRecord(mappedByteBuffer, sxfPassport, sxfReaderOptions);
-            sxfRecord.setHeader(sxfRecordHeader);
+    public static void FisxBorderRecordOffset(SXFPassport sxfPassport, SXFRecordHeader sxfRecordHeader) {
+        // Store current reader position
+        MappedByteBuffer mappedByteBuffer = sxfPassport.getMappedByteBuffer();
+        int position = mappedByteBuffer.position();
+        SXFRecord sxfRecord = new SXFRecord(sxfPassport);
+        sxfRecord.setHeader(sxfRecordHeader);
 
-            Geometry geometry = sxfRecord.getMetric().geometry;
-            // If Passport border equals border record dx0 and dy0 = 0
-            double dx0;
-            double dy0;
-            if (!sxfPassport.isFlipCoordinate) {
-                dx0 = sxfPassport.xSouthWest - geometry.getCoordinates()[0].x;
-                dy0 = sxfPassport.ySouthWest - geometry.getCoordinates()[0].y;
-            } else {
-                dx0 = sxfPassport.xSouthWest - geometry.getCoordinates()[0].y;
-                dy0 = sxfPassport.ySouthWest - geometry.getCoordinates()[0].x;
-            }
-            sxfPassport.dx0 = dx0;
-            sxfPassport.dy0 = dy0;
-            // Restore current position
-            mappedByteBuffer.position(position);
+        Geometry geometry = sxfRecord.getMetric().getSrcGeometry();
+        // If Passport border equals border record dx0 and dy0 = 0
+        double dx0;
+        double dy0;
+        if (!sxfPassport.isFlipCoordinate) {
+            dx0 = sxfPassport.xSouthWest - geometry.getCoordinates()[0].x;
+            dy0 = sxfPassport.ySouthWest - geometry.getCoordinates()[0].y;
+        } else {
+            dx0 = sxfPassport.xSouthWest - geometry.getCoordinates()[0].y;
+            dy0 = sxfPassport.ySouthWest - geometry.getCoordinates()[0].x;
+        }
+        sxfPassport.dx0 = dx0;
+        sxfPassport.dy0 = dy0;
+        // Restore current position
+        mappedByteBuffer.position(position);
     }
 
     /**

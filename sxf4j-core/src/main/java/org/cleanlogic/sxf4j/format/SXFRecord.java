@@ -12,23 +12,13 @@ import java.util.List;
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 public class SXFRecord {
-    private final MappedByteBuffer _mappedByteBuffer;
     private final SXFPassport _sxfPassport;
-    private final SXFReaderOptions _sxfReaderOptions;
     private SXFRecordHeader _sxfRecordHeader;
     private SXFRecordMetric _sxfRecordMetric;
     private List<SXFRecordSemantic> _sxfRecordSemantics;
 
-    public SXFRecord(MappedByteBuffer mappedByteBuffer, SXFPassport sxfPassport) {
-        _mappedByteBuffer = mappedByteBuffer;
+    public SXFRecord(SXFPassport sxfPassport) {
         _sxfPassport = sxfPassport;
-        _sxfReaderOptions = new SXFReaderOptions();
-    }
-
-    public SXFRecord(MappedByteBuffer mappedByteBuffer, SXFPassport sxfPassport, SXFReaderOptions sxfReaderOptions) {
-        _mappedByteBuffer = mappedByteBuffer;
-        _sxfPassport = sxfPassport;
-        _sxfReaderOptions = sxfReaderOptions;
     }
 
     public void setHeader(SXFRecordHeader sxfRecordHeader) {
@@ -44,7 +34,7 @@ public class SXFRecord {
             return _sxfRecordMetric;
         }
 
-        SXFRecordMetricReader sxfRecordMetricReader = new SXFRecordMetricReader(_mappedByteBuffer, _sxfPassport, _sxfReaderOptions);
+        SXFRecordMetricReader sxfRecordMetricReader = new SXFRecordMetricReader(_sxfPassport);
         _sxfRecordMetric = sxfRecordMetricReader.read(_sxfRecordHeader);
 
         return _sxfRecordMetric;
@@ -58,7 +48,7 @@ public class SXFRecord {
         if (!_sxfRecordHeader.isSemantic) {
             _sxfRecordSemantics = new ArrayList<>();
         } else {
-            SXFRecordSemanticReader sxfRecordSemanticReader = new SXFRecordSemanticReader(_mappedByteBuffer);
+            SXFRecordSemanticReader sxfRecordSemanticReader = new SXFRecordSemanticReader(_sxfPassport.getMappedByteBuffer());
             _sxfRecordSemantics = sxfRecordSemanticReader.read(_sxfRecordHeader);
         }
 
@@ -68,5 +58,10 @@ public class SXFRecord {
     public void destroy() {
         _sxfRecordHeader = null;
         _sxfRecordMetric = null;
+        if (_sxfRecordSemantics != null) {
+            for (SXFRecordSemantic sxfRecordSemantic : _sxfRecordSemantics) {
+                sxfRecordSemantic = null;
+            }
+        }
     }
 }

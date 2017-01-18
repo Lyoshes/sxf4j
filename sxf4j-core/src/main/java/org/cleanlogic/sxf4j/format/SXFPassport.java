@@ -3,7 +3,10 @@ package org.cleanlogic.sxf4j.format;
 import com.vividsolutions.jts.geom.*;
 import org.cleanlogic.sxf4j.SXF;
 import org.cleanlogic.sxf4j.enums.*;
+import org.cleanlogic.sxf4j.io.SXFReaderOptions;
 import org.cleanlogic.sxf4j.utils.Utils;
+
+import java.nio.MappedByteBuffer;
 
 /**
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
@@ -49,11 +52,11 @@ public class SXFPassport {
     public String name;
     public int conditionFlag;
     /**
-     * false - data not match with projection (map in rotation or deformation)
-     * true  - data match with projection
-     * Only {@link SXF#VERSION_3}
+     * false - data not match with projection (map in rotation or deformation).
+     * true  - data match with projection.
+     * Only {@link SXF#VERSION_3} can fill from {@link SXFDescriptor} in {@link SXF#VERSION_4}.
      */
-    public boolean dataProjectionFlag;
+    public Projection projectionFlag;
     /**
      * Auto generate GUID.
      * Only {@link SXF#VERSION_4}
@@ -261,6 +264,32 @@ public class SXFPassport {
 
     public boolean isFlipCoordinate = false;
 
+    /**
+     * MappedByteBuffer from which read the passport.
+     */
+    private final MappedByteBuffer _mappedByteBuffer;
+    /**
+     * SXF reader option
+     */
+    private final SXFReaderOptions _sxfReaderOptions;
+
+    public SXFPassport(MappedByteBuffer mappedByteBuffer, SXFReaderOptions sxfReaderOptions) {
+        _mappedByteBuffer = mappedByteBuffer;
+        _sxfReaderOptions = sxfReaderOptions;
+    }
+
+    /**
+     * Get MappedByteBuffer from which read the passport
+     * @return MappedByteBuffer from which read the passport
+     */
+    public MappedByteBuffer getMappedByteBuffer() {
+        return _mappedByteBuffer;
+    }
+
+    public SXFReaderOptions getReaderOptions() {
+        return _sxfReaderOptions;
+    }
+
     public int getZone() {
         return getZone(this);
     }
@@ -276,12 +305,12 @@ public class SXFPassport {
     }
 
     /**
-     * Convert (x, y, z) coordinates from descrets (if {@link #realPlaceFlag} != 0 and {@link #dataProjectionFlag} is true) to plane coordinates.
+     * Convert (x, y, z) coordinates from descrets (if {@link #realPlaceFlag} != 0 and {@link #projectionFlag} is true) to plane coordinates.
      * @param coordinate source coordinates in descrets.
      * @return converted plane coordinate.
      */
     public static Coordinate fromDescret(SXFPassport sxfPassport, Coordinate coordinate) {
-        if (!sxfPassport.dataProjectionFlag) {
+        if (sxfPassport.projectionFlag == Projection.NOADEQUACY) {
             return coordinate;
         }
         if (sxfPassport.realPlaceFlag != 0) {
@@ -407,7 +436,7 @@ public class SXFPassport {
         System.out.printf("\tInfoFlags:\n");
         System.out.printf("\t\tConditionFlag:\t\t%d\n", sxfPassport.conditionFlag);
         if (sxfPassport.version == SXF.VERSION_3) {
-            System.out.printf("\t\tProjection flag:\t%b\n", sxfPassport.dataProjectionFlag);
+            System.out.printf("\t\tProjection flag:\t%s (%s)\n", sxfPassport.projectionFlag, sxfPassport.projectionFlag.getName());
         } else {
             System.out.printf("\t\tAuto GUID:\t\t%b\n", sxfPassport.autoGUID);
         }
@@ -437,8 +466,8 @@ public class SXFPassport {
         System.out.printf("\t\tX South East:\t%f\n", sxfPassport.xSouthEast);
         System.out.printf("\t\tY South East:\t%f\n", sxfPassport.ySouthEast);
         System.out.printf("\t\tGeometry:\n");
-        System.out.printf("\t\t\tWKB: %s\n", SXFRecordMetric.geometryAsWKB(sxfPassport.getNativeGeometry()));
-        System.out.printf("\t\t\tWKT: %s\n", SXFRecordMetric.geometryAsWKT(sxfPassport.getNativeGeometry()));
+        System.out.printf("\t\t\tWKB: %s\n", Utils.geometryAsWKB(sxfPassport.getNativeGeometry()));
+        System.out.printf("\t\t\tWKT: %s\n", Utils.geometryAsWKT(sxfPassport.getNativeGeometry()));
         System.out.printf("\tThe geographic coordinates of sheet corners:\n");
         System.out.printf("\t\tB South West:\t%f\n", sxfPassport.bSouthWest);
         System.out.printf("\t\tL South West:\t%f\n", sxfPassport.lSouthWest);
@@ -449,8 +478,8 @@ public class SXFPassport {
         System.out.printf("\t\tB South East:\t%f\n", sxfPassport.bSouthEast);
         System.out.printf("\t\tL South East:\t%f\n", sxfPassport.lSouthEast);
         System.out.printf("\t\tGeography:\n");
-        System.out.printf("\t\t\tWKB: %s\n", SXFRecordMetric.geometryAsWKB(sxfPassport.getNativeGeography()));
-        System.out.printf("\t\t\tWKT: %s\n", SXFRecordMetric.geometryAsWKT(sxfPassport.getNativeGeography()));
+        System.out.printf("\t\t\tWKB: %s\n", Utils.geometryAsWKB(sxfPassport.getNativeGeography()));
+        System.out.printf("\t\t\tWKT: %s\n", Utils.geometryAsWKT(sxfPassport.getNativeGeography()));
         System.out.printf("\tThe mathematical basis of the sheet:\n");
         System.out.printf("\t\tEllipsoid kind:\t\t%s (%s)\n", sxfPassport.ellipsoidKind, sxfPassport.ellipsoidKind.getName());
         System.out.printf("\t\tHeight System:\t\t%s (%s)\n", sxfPassport.heightSystem, sxfPassport.heightSystem.getName());
@@ -489,8 +518,8 @@ public class SXFPassport {
         System.out.printf("\t\tX Border Device South East:\t%d\n", sxfPassport.xBorderDeviceSouthEast);
         System.out.printf("\t\tY Border Device South East:\t%d\n", sxfPassport.yBorderDeviceSouthEast);
         System.out.printf("\t\tDevice:\n");
-        System.out.printf("\t\t\tWKB: %s\n", SXFRecordMetric.geometryAsWKB(sxfPassport.getNativeDevice()));
-        System.out.printf("\t\t\tWKT: %s\n", SXFRecordMetric.geometryAsWKT(sxfPassport.getNativeDevice()));
+        System.out.printf("\t\t\tWKB: %s\n", Utils.geometryAsWKB(sxfPassport.getNativeDevice()));
+        System.out.printf("\t\t\tWKT: %s\n", Utils.geometryAsWKT(sxfPassport.getNativeDevice()));
         System.out.printf("\tBorder excode:\t%d\n", sxfPassport.borderExcode);
         System.out.printf("\tSource material projection info:\n");
         System.out.printf("\t\tFirst Main Parallel:\t%f\n", sxfPassport.firstMainParallel);

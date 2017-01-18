@@ -19,29 +19,32 @@ import java.util.List;
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 class SXFRecordHeaderReader {
-    private final SXFReaderOptions _sxfReaderOptions;
-    private MappedByteBuffer _mappedByteBuffer;
+    private final MappedByteBuffer _mappedByteBuffer;
+    private final SXFPassport _sxfPassport;
+    private final SXFDescriptor _sxfDescriptor;
+
     private List<SXFRecordHeader> _sxfRecordHeaders = new ArrayList<>();
 
     private SXFRecordHeader _borderRecordHeader;
 
-    SXFRecordHeaderReader(MappedByteBuffer mappedByteBuffer, SXFReaderOptions sxfReaderOptions) {
-        _sxfReaderOptions = sxfReaderOptions;
-        _mappedByteBuffer = mappedByteBuffer;
+    SXFRecordHeaderReader(SXFPassport sxfPassport, SXFDescriptor sxfDescriptor) {
+        _mappedByteBuffer = sxfPassport.getMappedByteBuffer();
+        _sxfPassport = sxfPassport;
+        _sxfDescriptor = sxfDescriptor;
     }
 
-    List<SXFRecordHeader> read(SXFPassport sxfPassport, SXFDescriptor sxfDescriptor) {
+    List<SXFRecordHeader> read() {
         // Set position of first record header.
-        if (sxfPassport.version == SXF.VERSION_3) {
-            readVersion3(sxfPassport, sxfDescriptor);
-        } else if (sxfPassport.version == SXF.VERSION_4) {
-            readVersion4(sxfPassport, sxfDescriptor);
+        if (_sxfPassport.version == SXF.VERSION_3) {
+            readVersion3();
+        } else if (_sxfPassport.version == SXF.VERSION_4) {
+            readVersion4();
         }
 
         return _sxfRecordHeaders;
     }
 
-    private void readVersion3(SXFPassport sxfPassport, SXFDescriptor sxfDescriptor) {
+    private void readVersion3() {
         _mappedByteBuffer.position(SXF.PASSPORT_3_LENGHT + SXF.DAT_3_LENGTH);
         while (_mappedByteBuffer.position() < _mappedByteBuffer.limit()) {
             try {
@@ -50,7 +53,7 @@ class SXFRecordHeaderReader {
                     break;
                 }
                 if (identifier != SXF.RECORD_SXF) {
-                    if (!_sxfReaderOptions.quite) {
+                    if (!_sxfPassport.getReaderOptions().quite) {
                         System.out.printf("Warning!!! Wrong identifier of record. Try fix it and find next identifier. position: %d from %d\n", _mappedByteBuffer.position(), _mappedByteBuffer.limit());
                     }
                     while (identifier != SXF.RECORD_SXF && (_mappedByteBuffer.limit() < _mappedByteBuffer.position())) {
@@ -60,7 +63,7 @@ class SXFRecordHeaderReader {
                         continue;
                     }
                 }
-                SXFRecordHeader sxfRecordHeader = new SXFRecordHeader(sxfPassport.version);
+                SXFRecordHeader sxfRecordHeader = new SXFRecordHeader(_sxfPassport.version);
                 sxfRecordHeader.identifier = identifier;
                 sxfRecordHeader.length = _mappedByteBuffer.getInt();
                 sxfRecordHeader.metricLength = _mappedByteBuffer.getInt();
@@ -116,8 +119,8 @@ class SXFRecordHeaderReader {
                 _mappedByteBuffer.position(_mappedByteBuffer.position() + sxfRecordHeader.length - 32);
 
                 // Set coordinate offset by border record
-                if (sxfRecordHeader.excode == sxfPassport.borderExcode) {
-                    SXFPassportFixes.FisxBorderRecordOffset(_mappedByteBuffer, sxfPassport, sxfRecordHeader, _sxfReaderOptions);
+                if (sxfRecordHeader.excode == _sxfPassport.borderExcode) {
+                    SXFPassportFixes.FisxBorderRecordOffset(_sxfPassport, sxfRecordHeader);
                 }
 
                 _sxfRecordHeaders.add(sxfRecordHeader);
@@ -126,14 +129,14 @@ class SXFRecordHeaderReader {
             }
         }
 
-        if (sxfDescriptor.recordCount != _sxfRecordHeaders.size()) {
-            if (!_sxfReaderOptions.quite) {
-                System.out.printf("Warning!!! Descriptor record count is %d, but readed records is %d\n", sxfDescriptor.recordCount, _sxfRecordHeaders.size());
+        if (_sxfDescriptor.recordCount != _sxfRecordHeaders.size()) {
+            if (!_sxfPassport.getReaderOptions().quite) {
+                System.out.printf("Warning!!! Descriptor record count is %d, but readed records is %d\n", _sxfDescriptor.recordCount, _sxfRecordHeaders.size());
             }
         }
     }
 
-    private void readVersion4(SXFPassport sxfPassport, SXFDescriptor sxfDescriptor) {
+    private void readVersion4() {
         _mappedByteBuffer.position(SXF.PASSPORT_4_LENGHT + SXF.DAT_4_LENGTH);
         while (_mappedByteBuffer.position() < _mappedByteBuffer.limit()) {
             try {
@@ -142,7 +145,7 @@ class SXFRecordHeaderReader {
                     break;
                 }
                 if (identifier != SXF.RECORD_SXF) {
-                    if (!_sxfReaderOptions.quite) {
+                    if (!_sxfPassport.getReaderOptions().quite) {
                         System.out.printf("Warning!!! Wrong identifier of record. Try fix it and find next identifier. position: %d from %d\n", _mappedByteBuffer.position(), _mappedByteBuffer.limit());
                     }
                     while (identifier != SXF.RECORD_SXF && (_mappedByteBuffer.limit() < _mappedByteBuffer.position())) {
@@ -153,7 +156,7 @@ class SXFRecordHeaderReader {
                     }
                 }
 
-                SXFRecordHeader sxfRecordHeader = new SXFRecordHeader(sxfPassport.version);
+                SXFRecordHeader sxfRecordHeader = new SXFRecordHeader(_sxfPassport.version);
                 sxfRecordHeader.identifier = identifier;
                 sxfRecordHeader.length = _mappedByteBuffer.getInt();
                 sxfRecordHeader.metricLength = _mappedByteBuffer.getInt();
@@ -215,8 +218,8 @@ class SXFRecordHeaderReader {
                 _mappedByteBuffer.position(_mappedByteBuffer.position() + sxfRecordHeader.length - 32);
 
                 // Set coordinate offset by border record
-                if (sxfRecordHeader.excode == sxfPassport.borderExcode) {
-                    SXFPassportFixes.FisxBorderRecordOffset(_mappedByteBuffer, sxfPassport, sxfRecordHeader, _sxfReaderOptions);
+                if (sxfRecordHeader.excode == _sxfPassport.borderExcode) {
+                    SXFPassportFixes.FisxBorderRecordOffset(_sxfPassport, sxfRecordHeader);
                 }
 
                 _sxfRecordHeaders.add(sxfRecordHeader);
@@ -225,9 +228,9 @@ class SXFRecordHeaderReader {
             }
         }
 
-        if (sxfDescriptor.recordCount != _sxfRecordHeaders.size()) {
-            if (!_sxfReaderOptions.quite) {
-                System.out.printf("Warning!!! Descriptor record count is %d, but readed records is %d\n", sxfDescriptor.recordCount, _sxfRecordHeaders.size());
+        if (_sxfDescriptor.recordCount != _sxfRecordHeaders.size()) {
+            if (!_sxfPassport.getReaderOptions().quite) {
+                System.out.printf("Warning!!! Descriptor record count is %d, but readed records is %d\n", _sxfDescriptor.recordCount, _sxfRecordHeaders.size());
             }
         }
     }

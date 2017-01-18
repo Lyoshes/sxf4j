@@ -13,43 +13,27 @@ import java.util.List;
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 class SXFRecordReader {
-    private MappedByteBuffer _mappedByteBuffer;
-    private final SXFReaderOptions _sxfReaderOptions;
+    private final SXFPassport _sxfPassport;
+    private final SXFDescriptor _sxfDescriptor;
     private List<SXFRecord> _sxfRecords = new ArrayList<>();
 
-    /**
-     * Default consructor for read records with default {@link SXFReaderOptions}.
-     * @param mappedByteBuffer opened buffered access to SXF file.
-     */
-    SXFRecordReader(MappedByteBuffer mappedByteBuffer) {
-        _mappedByteBuffer = mappedByteBuffer;
-        _sxfReaderOptions = new SXFReaderOptions();
-    }
-
-    /**
-     * Default consructor for read records.
-     * @param mappedByteBuffer opened buffered access to SXF file.
-     * @param sxfReaderOptions {@link SXFReaderOptions}.
-     */
-    SXFRecordReader(MappedByteBuffer mappedByteBuffer, SXFReaderOptions sxfReaderOptions) {
-        _mappedByteBuffer = mappedByteBuffer;
-        _sxfReaderOptions = sxfReaderOptions;
+    SXFRecordReader(SXFPassport sxfPassport, SXFDescriptor sxfDescriptor) {
+        _sxfPassport = sxfPassport;
+        _sxfDescriptor = sxfDescriptor;
     }
 
     /**
      * For read records need {@link SXFPassport} and {@link SXFDescriptor} because that method is package-private.
-     * @param sxfPassport Correct {@link SXFPassport}.
-     * @param sxfDescriptor Correct {@link SXFDescriptor}.
      * @return List of {@link SXFRecord}.
      */
-    List<SXFRecord> read(SXFPassport sxfPassport, SXFDescriptor sxfDescriptor) {
+    List<SXFRecord> read() {
         _sxfRecords.clear();
 
-        SXFRecordHeaderReader sxfRecordHeaderReader = new SXFRecordHeaderReader(_mappedByteBuffer, _sxfReaderOptions);
-        List<SXFRecordHeader> sxfRecordHeaders = sxfRecordHeaderReader.read(sxfPassport, sxfDescriptor);
+        SXFRecordHeaderReader sxfRecordHeaderReader = new SXFRecordHeaderReader(_sxfPassport, _sxfDescriptor);
+        List<SXFRecordHeader> sxfRecordHeaders = sxfRecordHeaderReader.read();
 
         for (SXFRecordHeader sxfRecordHeader : sxfRecordHeaders) {
-            SXFRecord sxfRecord = new SXFRecord(_mappedByteBuffer, sxfPassport, _sxfReaderOptions);
+            SXFRecord sxfRecord = new SXFRecord(_sxfPassport);
             sxfRecord.setHeader(sxfRecordHeader);
             _sxfRecords.add(sxfRecord);
         }

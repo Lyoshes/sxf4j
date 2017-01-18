@@ -1,6 +1,7 @@
 package org.cleanlogic.sxf4j.io;
 
 import org.cleanlogic.sxf4j.SXF;
+import org.cleanlogic.sxf4j.enums.Projection;
 import org.cleanlogic.sxf4j.enums.Secrecy;
 import org.cleanlogic.sxf4j.enums.TextEncoding;
 import org.cleanlogic.sxf4j.exceptions.SXFDescriptorReadError;
@@ -13,17 +14,19 @@ import java.nio.MappedByteBuffer;
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 class SXFDescriptorReader {
-    private MappedByteBuffer _mappedByteBuffer;
-    private  SXFDescriptor _sxfDescriptor;
+    private final SXFPassport _sxfPassport;
+    private final MappedByteBuffer _mappedByteBuffer;
+    private SXFDescriptor _sxfDescriptor;
 
-    SXFDescriptorReader(MappedByteBuffer mappedByteBuffer) {
-        _mappedByteBuffer = mappedByteBuffer;
+    SXFDescriptorReader(SXFPassport sxfPassport) {
+        _sxfPassport = sxfPassport;
+        _mappedByteBuffer = sxfPassport.getMappedByteBuffer();
     }
 
-    SXFDescriptor read(SXFPassport sxfPassport) {
+    SXFDescriptor read() {
         // Set to position of descriptor data
-        if (_mappedByteBuffer.position() != sxfPassport.length) {
-            _mappedByteBuffer.position(sxfPassport.length);
+        if (_mappedByteBuffer.position() != _sxfPassport.length) {
+            _mappedByteBuffer.position(_sxfPassport.length);
         }
         int identifier = _mappedByteBuffer.getInt();
         if (identifier != SXF.DAT_SXF) {
@@ -32,15 +35,15 @@ class SXFDescriptorReader {
 
         _sxfDescriptor = new SXFDescriptor();
         _sxfDescriptor.identifier = identifier;
-        if (sxfPassport.version == SXF.VERSION_3) {
+        if (_sxfPassport.version == SXF.VERSION_3) {
             readVersion3();
-        } else if (sxfPassport.version == SXF.VERSION_4) {
+        } else if (_sxfPassport.version == SXF.VERSION_4) {
             readVersion4();
             // Set data projection flag in passport
-            sxfPassport.dataProjectionFlag = _sxfDescriptor.dataProjectionFlag;
+            _sxfPassport.projectionFlag = _sxfDescriptor.projectionFlag;
         }
 
-        int total = sxfPassport.length + _sxfDescriptor.length;
+        int total = _sxfPassport.length + _sxfDescriptor.length;
 
         if (total != _mappedByteBuffer.position()) {
             throw new SXFDescriptorReadError(String.format("Error length of readed data. Readed: %d. Must be: %d", _mappedByteBuffer.position(), total));
@@ -62,7 +65,7 @@ class SXFDescriptorReader {
         byte[] infoFlags = new byte[4];
         _mappedByteBuffer.get(infoFlags);
         _sxfDescriptor.conditionFlag = infoFlags[0] & 0x3;
-        _sxfDescriptor.dataProjectionFlag = ((infoFlags[0] >> 2) & 0x1) == 1;
+        _sxfDescriptor.projectionFlag = Projection.fromValue((infoFlags[0] >> 2) & 0x1);
         _sxfDescriptor.realPlaceFlag = (infoFlags[0] >> 3) & 0x3;
         _sxfDescriptor.codeTypeFlag = (infoFlags[0] >> 5) & 0x3;
         _sxfDescriptor.generalizationFlag = (infoFlags[0] >> 7) & 0x1;
@@ -83,7 +86,7 @@ class SXFDescriptorReader {
         byte[] infoFlags = new byte[4];
         _mappedByteBuffer.get(infoFlags);
         _sxfDescriptor.conditionFlag = infoFlags[0] & 0x3;
-        _sxfDescriptor.dataProjectionFlag = ((infoFlags[0] >> 2) & 0x1) == 1;
+        _sxfDescriptor.projectionFlag = Projection.fromValue((infoFlags[0] >> 2) & 0x1);
         _sxfDescriptor.realPlaceFlag = (infoFlags[0] >> 3) & 0x3;
         _sxfDescriptor.codeTypeFlag = (infoFlags[0] >> 5) & 0x3;
         _sxfDescriptor.generalizationFlag = (infoFlags[0] >> 7) & 0x1;

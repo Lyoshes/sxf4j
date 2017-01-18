@@ -95,11 +95,11 @@ public class SXFReader {
         SXFPassportReader sxfPassportReader = new SXFPassportReader(mappedByteBuffer, _sxfReaderOptions);
         _sxfPassport = sxfPassportReader.read();
 
-        SXFDescriptorReader sxfDescriptorReader = new SXFDescriptorReader(mappedByteBuffer);
-        _sxfDescriptor = sxfDescriptorReader.read(_sxfPassport);
+        SXFDescriptorReader sxfDescriptorReader = new SXFDescriptorReader(_sxfPassport);
+        _sxfDescriptor = sxfDescriptorReader.read();
 
-        SXFRecordReader sxfRecordReader = new SXFRecordReader(mappedByteBuffer, _sxfReaderOptions);
-        _sxfRecords = sxfRecordReader.read(_sxfPassport, _sxfDescriptor);
+        SXFRecordReader sxfRecordReader = new SXFRecordReader(_sxfPassport, _sxfDescriptor);
+        _sxfRecords = sxfRecordReader.read();
 //
 //        // Check for metaobject is exists. It will be first object after descriptor
 //        if (_sxfRecords.size() > 0) {
