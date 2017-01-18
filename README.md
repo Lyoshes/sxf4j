@@ -46,7 +46,7 @@ Dependes:
  |----|-----------|--------|
  |`-c`|Print record count|No|
  |`-d`|Print descriptor of SXF|NO|
- |`-f`,|Flip coordinates
+ |`-f`|Flip coordinates
  |`-gt`|All geometry print type (WKT, EWKT, WKB). Default: WKT.|No|
  |`-h`|Print usage|No|
  |`-p`|Print passport of SXF|No|
@@ -56,11 +56,13 @@ Dependes:
  |`-s`|Set the SRID field. Defaults to 0.|No|
  
  ### sxf2pgsql [\<options\>] <sxfile|dir> [[\<schema\>.]\<table\>]
- `./bin/sxf2pgsql.sh -d -s 4326 /Users/iserge/Develop/Map/K37007.SXF | psql -U postgres sxf`
+ `./bin/sxf2pgsql.sh -d -s 4326 /Users/iserge/Develop/Map/500\ 000 | psql -U postgres sxf`
  
- `./bin/sxf2pgsql.sh -e -d -s 4326 /Users/iserge/Develop/Map/K37007.SXF | psql -U postgres sxf`
+ ![separated](https://github.com/iSergio/sxf4j/images/sxf2pgsql.png)
  
- `./bin/sxf2pgsql.sh -s 4326 /Users/iserge/Develop/Map/500\ 000 | psql -U postgres sxf -q`
+ `./bin/sxf2pgsql.sh -s 4326 /Users/iserge/Develop/Map/1\ 000\ 000 1kk | psql -U postgres sxf -q`
+ 
+ ![many2one](https://github.com/iSergio/sxf4j/images/sxf2pgsql-many2one.png)
  
  ### Command line flags:
  |Flag|Description|Required|
@@ -72,6 +74,7 @@ Dependes:
  |`-h`|Display this help screen.|No|
  |`-I`|Create a spatial index on the geocolumn.|No|
  |`-s`|Set the SRID field. Defaults to detect from passport or 0. Optionally reprojects from given SRID|NO|
+ |`-t`|Use only PostGIS coordinates transform (ST_Transform), Use with -s option. Not worked with -D. Default: client side convert (Slow)|
  |`-T`|Specify the tablespace for the new table. Note that indexes will still use the default tablespace unless the -X flag is also used.|No|
  |`-w`|Output WKT instead of WKB.  Note that this can result in coordinate drift.|No|
  |`-W`|Specify the character encoding of SXF attribute column.|No, default `UTF8`|
