@@ -2,6 +2,8 @@ package org.cleanlogic.sxf4j.io;
 
 import com.vividsolutions.jts.geom.*;
 import org.cleanlogic.sxf4j.SXF;
+import org.cleanlogic.sxf4j.convert.CTS;
+import org.cleanlogic.sxf4j.convert.PROJ;
 import org.cleanlogic.sxf4j.enums.MetricElementSize;
 import org.cleanlogic.sxf4j.enums.TextEncoding;
 import org.cleanlogic.sxf4j.enums.TextMetricAlign;
@@ -10,6 +12,8 @@ import org.cleanlogic.sxf4j.format.SXFRecordHeader;
 import org.cleanlogic.sxf4j.format.SXFRecordMetric;
 import org.cleanlogic.sxf4j.format.SXFRecordMetricText;
 import org.cleanlogic.sxf4j.utils.Utils;
+import org.cts.IllegalCoordinateException;
+import org.cts.crs.CRSException;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.MappedByteBuffer;
@@ -20,28 +24,48 @@ import java.util.List;
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 public class SXFRecordMetricReader {
-    private final MappedByteBuffer _mappedByteBuffer;
     private final SXFPassport _sxfPassport;
+    private final MappedByteBuffer _mappedByteBuffer;
     private final SXFReaderOptions _sxfReaderOptions;
-    private final GeometryFactory _geometryFactory;
+    private final GeometryFactory _srcGeometryFactory;
+    private GeometryFactory _dstGeometryFactory;
 
-    public SXFRecordMetricReader(MappedByteBuffer mappedByteBuffer, SXFPassport sxfPassport) {
-        _mappedByteBuffer = mappedByteBuffer;
-        _sxfPassport = sxfPassport;
-        _sxfReaderOptions = new SXFReaderOptions();
-        _geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), Utils.detectSRID(sxfPassport));
-    }
+    private PROJ _PROJ;
+    private CTS  _CTS;
 
-    public SXFRecordMetricReader(MappedByteBuffer mappedByteBuffer, SXFPassport sxfPassport, SXFReaderOptions sxfReaderOptions) {
-        _mappedByteBuffer = mappedByteBuffer;
+    public SXFRecordMetricReader(SXFPassport sxfPassport) {
         _sxfPassport = sxfPassport;
-        _sxfReaderOptions = sxfReaderOptions;
-        _geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), Utils.detectSRID(sxfPassport));
+        _mappedByteBuffer = sxfPassport.getMappedByteBuffer();
+        _sxfReaderOptions = sxfPassport.getReaderOptions();
+
+        int srcSRID = sxfPassport.epsg;
+        if (srcSRID == 0) {
+            srcSRID = Utils.detectSRID(sxfPassport);
+            if (srcSRID == 0) {
+                srcSRID = sxfPassport.getReaderOptions().srcSRID;
+            }
+        }
+
+        if (_sxfReaderOptions.dstSRID != 0 && _sxfReaderOptions.dstSRID != _sxfReaderOptions.srcSRID) {
+            _PROJ = new PROJ(srcSRID, _sxfReaderOptions.dstSRID);
+//            try {
+//                _CTS = new CTS(srcSRID, _sxfReaderOptions.dstSRID);
+//            } catch (CRSException e) {
+//                e.printStackTrace();
+//            }
+        }
+
+        _srcGeometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), srcSRID);
+        if (_PROJ != null) {
+            _dstGeometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), _sxfReaderOptions.dstSRID);
+        }
     }
 
     public SXFRecordMetric read(SXFRecordHeader sxfRecordHeader) {
         _mappedByteBuffer.position((int) sxfRecordHeader.metricOffset);
-        List<Coordinate> recordCoordinates = new ArrayList<>();
+
+        List<Coordinate> recordSrcCoordinates = new ArrayList<>();
+        List<Coordinate> recordDstCoordinates = new ArrayList<>();
 
         for (int i = 0; i < sxfRecordHeader.pointCount; i++) {
             Coordinate coordinate = readCoordinate(sxfRecordHeader, _sxfReaderOptions.flipCoordinates);
@@ -49,7 +73,17 @@ public class SXFRecordMetricReader {
             if (_sxfReaderOptions.flipCoordinates) {
                 coordinate = new Coordinate(coordinate.y, coordinate.x, coordinate.z);
             }
-            recordCoordinates.add(coordinate);
+            recordSrcCoordinates.add(coordinate);
+            if (_PROJ != null) {
+                recordDstCoordinates.add(_PROJ.doConvert(coordinate));
+            }
+            if (_CTS != null) {
+                try {
+                    recordDstCoordinates.add(_CTS.doConvert(coordinate));
+                } catch (IllegalCoordinateException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         // After main metric may be text metric
         List<SXFRecordMetricText> sxfRecordMetricTexts = new ArrayList<>();
@@ -58,22 +92,35 @@ public class SXFRecordMetricReader {
             sxfRecordMetricTexts.add(sxfRecordMetricText);
         }
 
-        List<List<Coordinate>> subrecordsCoordinates = new ArrayList<>();
+        List<List<Coordinate>> subrecordsSrcCoordinates = new ArrayList<>();
+        List<List<Coordinate>> subrecordsDstCoordinates = new ArrayList<>();
         // Process subject
         for (int i = 0; i < sxfRecordHeader.subjectCount; i++) {
             // First two bytes is reserver, skip them
             _mappedByteBuffer.position(_mappedByteBuffer.position() + 2);
             int pointCount = _mappedByteBuffer.getShort();
-            List<Coordinate> subrecordCoordinates =  new ArrayList<>();
+            List<Coordinate> subrecordSrcCoordinates =  new ArrayList<>();
+            List<Coordinate> subrecordDstCoordinates =  new ArrayList<>();
             for (int k = 0; k < pointCount; k++) {
                 Coordinate coordinate = readCoordinate(sxfRecordHeader, _sxfReaderOptions.flipCoordinates);
                 coordinate = _sxfPassport.fromDescret(coordinate);
                 if (_sxfReaderOptions.flipCoordinates) {
                     coordinate = new Coordinate(coordinate.y, coordinate.x, coordinate.z);
                 }
-                subrecordCoordinates.add(coordinate);
+                subrecordSrcCoordinates.add(coordinate);
+                if (_PROJ != null) {
+                    subrecordDstCoordinates.add(_PROJ.doConvert(coordinate));
+                }
+                if (_CTS != null) {
+                    try {
+                        subrecordDstCoordinates.add(_CTS.doConvert(coordinate));
+                    } catch (IllegalCoordinateException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-            subrecordsCoordinates.add(subrecordCoordinates);
+            subrecordsSrcCoordinates.add(subrecordSrcCoordinates);
+            subrecordsDstCoordinates.add(subrecordDstCoordinates);
             // Text of subjects
             if (sxfRecordHeader.isText) {
                 SXFRecordMetricText sxfRecordMetricText = readText();
@@ -81,49 +128,36 @@ public class SXFRecordMetricReader {
             }
         }
 
-        SXFRecordMetric sxfRecordMetric = new SXFRecordMetric();
-        if (sxfRecordHeader.isText) {
-            sxfRecordMetric.metricTexts = sxfRecordMetricTexts;
-        }
+        Geometry srcGeometry = null;
+        Geometry dstGeometry = null;
         switch (sxfRecordHeader.local) {
             case LINE:
             case TITLE:
             case VECTOR:
             case MIXED:
-                if (recordCoordinates.size() == 1) {
-                    recordCoordinates.add(recordCoordinates.get(0));
+                // Source geometry in coordinate, projection system of map
+                srcGeometry = createMultiLineString(recordSrcCoordinates, subrecordsSrcCoordinates, _srcGeometryFactory);
+                if (recordDstCoordinates.size() > 0) {
+                    dstGeometry = createMultiLineString(recordDstCoordinates, subrecordsDstCoordinates, _dstGeometryFactory);
                 }
-                LineString[] lineStrings = new LineString[1 + subrecordsCoordinates.size()];
-                lineStrings[0] = _geometryFactory.createLineString(recordCoordinates.toArray(new Coordinate[recordCoordinates.size()]));
-                for (int i = 0; i < subrecordsCoordinates.size(); i++) {
-                    List<Coordinate> coordinates = subrecordsCoordinates.get(i);
-                    if (coordinates.size() == 1) {
-                        coordinates.add(coordinates.get(0));
-                    }
-                    lineStrings[i + 1] = _geometryFactory.createLineString(coordinates.toArray(new Coordinate[coordinates.size()]));
-                }
-                sxfRecordMetric.geometry = _geometryFactory.createMultiLineString(lineStrings);
                 break;
             case POINT:
-                Point[] points = new Point[1 + subrecordsCoordinates.size()];
-                points[0] = _geometryFactory.createPoint(recordCoordinates.get(0));
-                for (int i = 0; i < subrecordsCoordinates.size(); i++) {
-                    List<Coordinate> coordinates = subrecordsCoordinates.get(i);
-                    points[i + 1] = _geometryFactory.createPoint(coordinates.get(0));
+                srcGeometry = createMultiPoint(recordSrcCoordinates, subrecordsSrcCoordinates, _srcGeometryFactory);
+                if (recordDstCoordinates.size() > 0) {
+                    dstGeometry = createMultiPoint(recordDstCoordinates, subrecordsDstCoordinates, _dstGeometryFactory);
                 }
-                sxfRecordMetric.geometry = _geometryFactory.createMultiPoint(points);
                 break;
             case SQUARE: {
-                LinearRing shell = _geometryFactory.createLinearRing(recordCoordinates.toArray(new Coordinate[recordCoordinates.size()]));
-                LinearRing[] holes = new LinearRing[subrecordsCoordinates.size()];
-                for (int i = 0; i < subrecordsCoordinates.size(); i++) {
-                    List<Coordinate> coordinates = subrecordsCoordinates.get(i);
-                    holes[i] = _geometryFactory.createLinearRing(coordinates.toArray(new Coordinate[coordinates.size()]));
+                srcGeometry = createMultiPolygon(recordSrcCoordinates, subrecordsSrcCoordinates, _srcGeometryFactory);
+                if (recordDstCoordinates.size() > 0) {
+                    dstGeometry = createMultiPolygon(recordDstCoordinates, subrecordsDstCoordinates, _dstGeometryFactory);
                 }
-                Polygon polygon = _geometryFactory.createPolygon(shell, holes);
-                sxfRecordMetric.geometry = _geometryFactory.createMultiPolygon(new Polygon[]{polygon});
             } break;
             default: break;
+        }
+        SXFRecordMetric sxfRecordMetric = new SXFRecordMetric(srcGeometry, dstGeometry);
+        if (sxfRecordHeader.isText) {
+            sxfRecordMetric.metricTexts = sxfRecordMetricTexts;
         }
 
         return sxfRecordMetric;
@@ -203,5 +237,45 @@ public class SXFRecordMetricReader {
             }
         }
         return new SXFRecordMetricText(text, align);
+    }
+
+    private Geometry createMultiLineString(List<Coordinate> recordCoordinates, List<List<Coordinate>> subrecordsCoordinates, GeometryFactory geometryFactory) {
+        if (recordCoordinates.size() == 1) {
+            recordCoordinates.add(recordCoordinates.get(0));
+        }
+        LineString[] lineStrings = new LineString[1 + subrecordsCoordinates.size()];
+        lineStrings[0] = _srcGeometryFactory.createLineString(recordCoordinates.toArray(new Coordinate[recordCoordinates.size()]));
+        for (int i = 0; i < subrecordsCoordinates.size(); i++) {
+            List<Coordinate> coordinates = subrecordsCoordinates.get(i);
+            if (coordinates.size() == 1) {
+                coordinates.add(coordinates.get(0));
+            }
+            lineStrings[i + 1] = _srcGeometryFactory.createLineString(coordinates.toArray(new Coordinate[coordinates.size()]));
+        }
+
+        return geometryFactory.createMultiLineString(lineStrings);
+    }
+
+    private Geometry createMultiPoint(List<Coordinate> recordCoordinates, List<List<Coordinate>> subrecordsCoordinates, GeometryFactory geometryFactory) {
+        Point[] points = new Point[1 + subrecordsCoordinates.size()];
+        points[0] = _srcGeometryFactory.createPoint(recordCoordinates.get(0));
+        for (int i = 0; i < subrecordsCoordinates.size(); i++) {
+            List<Coordinate> coordinates = subrecordsCoordinates.get(i);
+            points[i + 1] = _srcGeometryFactory.createPoint(coordinates.get(0));
+        }
+
+        return geometryFactory.createMultiPoint(points);
+    }
+
+    private Geometry createMultiPolygon(List<Coordinate> recordCoordinates, List<List<Coordinate>> subrecordsCoordinates, GeometryFactory geometryFactory) {
+        LinearRing shell = geometryFactory.createLinearRing(recordCoordinates.toArray(new Coordinate[recordCoordinates.size()]));
+        LinearRing[] holes = new LinearRing[subrecordsCoordinates.size()];
+        for (int i = 0; i < subrecordsCoordinates.size(); i++) {
+            List<Coordinate> coordinates = subrecordsCoordinates.get(i);
+            holes[i] = geometryFactory.createLinearRing(coordinates.toArray(new Coordinate[coordinates.size()]));
+        }
+        Polygon polygon = geometryFactory.createPolygon(shell, holes);
+
+        return  geometryFactory.createMultiPolygon(new Polygon[]{polygon});
     }
 }
