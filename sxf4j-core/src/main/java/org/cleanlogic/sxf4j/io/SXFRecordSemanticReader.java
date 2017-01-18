@@ -2,6 +2,7 @@ package org.cleanlogic.sxf4j.io;
 
 import org.cleanlogic.sxf4j.enums.SemanticType;
 import org.cleanlogic.sxf4j.enums.TextEncoding;
+import org.cleanlogic.sxf4j.fixes.SXFRecordSemanticFix;
 import org.cleanlogic.sxf4j.format.SXFRecordHeader;
 import org.cleanlogic.sxf4j.format.SXFRecordSemantic;
 
@@ -90,7 +91,11 @@ public class SXFRecordSemanticReader {
                         }
                         byte[] string = new byte[sxfRecordSemantic.scale + 1];
                         _mappedByteBuffer.get(string);
-                        sxfRecordSemantic.value = new String(string, charset).trim();
+                        String value = new String(string, charset).trim();
+                        if (sxfRecordSemantic.type == SemanticType.STRUNI) {
+                            value = SXFRecordSemanticFix.RemoveBinaryZero(value.getBytes(charset));
+                        }
+                        sxfRecordSemantic.value = value;
                         totalBytes -= (sxfRecordSemantic.scale + 1);
                     }
                     break;
