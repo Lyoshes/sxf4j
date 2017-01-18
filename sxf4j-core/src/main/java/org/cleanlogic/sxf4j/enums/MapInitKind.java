@@ -69,7 +69,11 @@ public enum MapInitKind {
      * @return enum by integer.
      */
     public static MapInitKind fromValue(int value) {
-        return _intToEnumMap.get(value);
+        MapInitKind mapInitKind = _intToEnumMap.get(value);
+        if (mapInitKind == null) {
+            mapInitKind = MAP;
+        }
+        return mapInitKind;
     }
 
     /**
