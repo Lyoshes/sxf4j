@@ -117,6 +117,7 @@ public class Sxf2Pgsql {
 
             if (commandLine.hasOption("help") || commandLine.getArgList().size() == 0) {
                 helpFormatter.printHelp("sxf2pgsql [<options>] <sxfile|dir> [[<schema>.]<table>]", options);
+                return;
             }
 
             if (commandLine.hasOption('s')) {
