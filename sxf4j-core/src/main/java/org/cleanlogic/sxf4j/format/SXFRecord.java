@@ -1,10 +1,8 @@
 package org.cleanlogic.sxf4j.format;
 
-import org.cleanlogic.sxf4j.io.SXFReaderOptions;
 import org.cleanlogic.sxf4j.io.SXFRecordMetricReader;
 import org.cleanlogic.sxf4j.io.SXFRecordSemanticReader;
 
-import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 

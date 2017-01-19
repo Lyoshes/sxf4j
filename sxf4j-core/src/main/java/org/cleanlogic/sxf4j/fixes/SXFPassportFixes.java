@@ -6,7 +6,6 @@ import org.cleanlogic.sxf4j.enums.MapInitType;
 import org.cleanlogic.sxf4j.format.SXFPassport;
 import org.cleanlogic.sxf4j.format.SXFRecord;
 import org.cleanlogic.sxf4j.format.SXFRecordHeader;
-import org.cleanlogic.sxf4j.io.SXFReaderOptions;
 
 import java.nio.MappedByteBuffer;
 

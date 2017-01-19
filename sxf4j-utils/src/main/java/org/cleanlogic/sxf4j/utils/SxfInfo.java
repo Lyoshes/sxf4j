@@ -2,12 +2,11 @@ package org.cleanlogic.sxf4j.utils;
 
 import org.apache.commons.cli.*;
 import org.cleanlogic.sxf4j.exceptions.SXFWrongFormatException;
-import org.cleanlogic.sxf4j.fixes.SXFPassportFixes;
 import org.cleanlogic.sxf4j.format.SXFRecord;
 import org.cleanlogic.sxf4j.format.SXFRecordMetricText;
 import org.cleanlogic.sxf4j.format.SXFRecordSemantic;
-import org.cleanlogic.sxf4j.io.SXFReaderOptions;
 import org.cleanlogic.sxf4j.io.SXFReader;
+import org.cleanlogic.sxf4j.io.SXFReaderOptions;
 
 import java.io.File;
 import java.io.IOException;

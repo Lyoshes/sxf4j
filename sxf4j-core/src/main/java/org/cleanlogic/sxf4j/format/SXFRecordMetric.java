@@ -1,8 +1,6 @@
 package org.cleanlogic.sxf4j.format;
 
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.WKBWriter;
-import com.vividsolutions.jts.io.WKTWriter;
 
 import java.util.ArrayList;
 import java.util.List;

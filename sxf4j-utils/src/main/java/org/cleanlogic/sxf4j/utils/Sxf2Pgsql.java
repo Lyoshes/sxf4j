@@ -1,8 +1,6 @@
 package org.cleanlogic.sxf4j.utils;
 
-import com.sun.javafx.binding.StringFormatter;
 import org.apache.commons.cli.*;
-import org.cleanlogic.sxf4j.SXF;
 import org.cleanlogic.sxf4j.enums.Local;
 import org.cleanlogic.sxf4j.format.SXFPassport;
 import org.cleanlogic.sxf4j.format.SXFRecord;

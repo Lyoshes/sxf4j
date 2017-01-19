@@ -2,15 +2,10 @@ package org.cleanlogic.sxf4j.convert;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import org.cleanlogic.sxf4j.utils.Utils;
-import org.cts.crs.GeodeticCRS;
-import org.cts.op.CoordinateOperation;
-import org.cts.op.CoordinateOperationFactory;
 import org.osgeo.proj4j.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Class for convert SXF Records coordinates based on PROJ4J library

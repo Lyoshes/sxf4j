@@ -1,9 +1,6 @@
 package org.cleanlogic.sxf4j.io;
 
 import com.vividsolutions.jts.geom.*;
-import org.cleanlogic.sxf4j.SXF;
-import org.cleanlogic.sxf4j.convert.CTS;
-import org.cleanlogic.sxf4j.convert.PROJ;
 import org.cleanlogic.sxf4j.enums.MetricElementSize;
 import org.cleanlogic.sxf4j.enums.TextEncoding;
 import org.cleanlogic.sxf4j.enums.TextMetricAlign;
@@ -12,8 +9,6 @@ import org.cleanlogic.sxf4j.format.SXFRecordHeader;
 import org.cleanlogic.sxf4j.format.SXFRecordMetric;
 import org.cleanlogic.sxf4j.format.SXFRecordMetricText;
 import org.cleanlogic.sxf4j.utils.Utils;
-import org.cts.IllegalCoordinateException;
-import org.cts.crs.CRSException;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.MappedByteBuffer;

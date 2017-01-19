@@ -2,7 +2,6 @@ package org.cleanlogic.sxf4j;
 
 import junit.framework.TestCase;
 import junit.textui.TestRunner;
-
 import org.cleanlogic.sxf4j.exceptions.SXFWrongFormatException;
 import org.cleanlogic.sxf4j.io.SXFReader;
 

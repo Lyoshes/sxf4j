@@ -1,8 +1,5 @@
 package org.cleanlogic.sxf4j;
 
-import org.cleanlogic.sxf4j.enums.*;
-import org.cleanlogic.sxf4j.format.SXFPassport;
-
 /**
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */

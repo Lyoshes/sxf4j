@@ -1,7 +1,6 @@
 package org.cleanlogic.sxf4j.io;
 
 import org.cleanlogic.sxf4j.convert.PROJ;
-import org.cleanlogic.sxf4j.fixes.SXFPassportFixes;
 
 /**
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>

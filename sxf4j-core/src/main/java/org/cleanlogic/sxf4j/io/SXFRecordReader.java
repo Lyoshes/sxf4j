@@ -5,7 +5,6 @@ import org.cleanlogic.sxf4j.format.SXFPassport;
 import org.cleanlogic.sxf4j.format.SXFRecord;
 import org.cleanlogic.sxf4j.format.SXFRecordHeader;
 
-import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
