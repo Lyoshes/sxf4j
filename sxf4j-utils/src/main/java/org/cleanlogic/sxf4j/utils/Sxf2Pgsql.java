@@ -14,7 +14,9 @@ import org.cleanlogic.sxf4j.io.SXFReaderOptions;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
@@ -48,14 +50,14 @@ public class Sxf2Pgsql {
         sridOption.setArgName("[<from>:]<srid>");
         options.addOption(sridOption);
 
-        Option stTransformOption = new Option("t", false, "Use only PostGIS coordinates transform (ST_Transform), Use with -s option. Not worked with -D. Default: client side convert (Slow).");
+        Option stTransformOption = new Option("t", false, "Use only PostGIS coordinates transform (ST_Transform), Use with -s option. Not worked with -D. Default: client side convert.");
         options.addOption(stTransformOption);
 
         Option geometryColumnOption = new Option("g", true, "Specify the name of the geometry/geography column");
         geometryColumnOption.setArgName("geocolumn");
         options.addOption(geometryColumnOption);
 
-        Option pgdumpFormatOption = new Option("D", false, "Use postgresql dump format (defaults to SQL insert statements).");
+        Option pgdumpFormatOption = new Option("D", false, "Use postgresql dump format (COPY from stdin) (defaults to SQL insert statements).");
         options.addOption(pgdumpFormatOption);
 
         Option transactionOption = new Option("e", false, "Execute each statement individually, do not use a transaction. Not compatible with -D.");
@@ -114,6 +116,7 @@ public class Sxf2Pgsql {
             if (commandLine.hasOption('g')) {
                 sxf2PgsqlOptions.geocolumnName = commandLine.getOptionValue('g');
             }
+            sxf2PgsqlOptions.pgdumpFormat = commandLine.hasOption('D');
             sxf2PgsqlOptions.transaction = !commandLine.hasOption('e');
             sxf2PgsqlOptions.spatialIndex = commandLine.hasOption('I');
             if (commandLine.hasOption('w')) {
@@ -184,16 +187,18 @@ public class Sxf2Pgsql {
                         }
                         System.out.printf(createTables());
                     }
-                    for (SXFRecord sxfRecord : sxfReader.getRecords()) {
-                        System.out.print(createInsert(sxfRecord));
+                    if (!sxf2PgsqlOptions.pgdumpFormat) {
+                        for (SXFRecord sxfRecord : sxfReader.getRecords()) {
+                            System.out.print(createInsert(sxfRecord));
+                        }
+                    } else {
+                        createCopy(sxfReader.getRecords());
                     }
                     if (useNomenclature) {
                         if (sxf2PgsqlOptions.spatialIndex) {
-                            System.out.printf("CREATE INDEX \"indx_%s\" ON \"%s\".\"%s\" USING GIST (\"%s\");\n",
-                                    sxf2PgsqlOptions.tableName.toLowerCase(),
-                                    sxf2PgsqlOptions.schemaName,
-                                    sxf2PgsqlOptions.tableName,
-                                    sxf2PgsqlOptions.geocolumnName);
+                            for (Local local : Local.values()) {
+                                System.out.printf(createIndex(local));
+                            }
                         }
                         System.out.printf("END;\n");
                     }
@@ -203,11 +208,9 @@ public class Sxf2Pgsql {
             }
             if (!useNomenclature) {
                 if (sxf2PgsqlOptions.spatialIndex) {
-                    System.out.printf("CREATE INDEX \"indx_%s\" ON \"%s\".\"%s\" USING GIST (\"%s\");\n",
-                            sxf2PgsqlOptions.tableName.toLowerCase(),
-                            sxf2PgsqlOptions.schemaName,
-                            sxf2PgsqlOptions.tableName,
-                            sxf2PgsqlOptions.geocolumnName);
+                    for (Local local : Local.values()) {
+                        System.out.printf(createIndex(local));
+                    }
                 }
                 if (sxf2PgsqlOptions.transaction) {
                     System.out.printf("END;\n");
@@ -246,7 +249,8 @@ public class Sxf2Pgsql {
         for (Local local : Local.values()) {
             String schemaName = sxf2PgsqlOptions.schemaName;
             String tableName = String.format("%s_%s", sxf2PgsqlOptions.tableName, local);
-            stringBuilder.append(String.format("CREATE TABLE \"%s\".\"%s\" (gid SERIAL PRIMARY KEY,\n", schemaName, tableName));
+            stringBuilder.append(String.format("CREATE TABLE \"%s\".\"%s\" (\n", schemaName, tableName));
+            stringBuilder.append("gid SERIAL PRIMARY KEY,\n");
             stringBuilder.append("\"excode\" integer,\n");
             stringBuilder.append("\"number\" integer,\n");
             stringBuilder.append("\"text\" text,\n");
@@ -262,6 +266,44 @@ public class Sxf2Pgsql {
                     3));
         }
         return stringBuilder.toString();
+    }
+
+    private static void createCopy(List<SXFRecord> sxfRecords) {
+        // Prepare copy by locals
+        Map<Local, List<SXFRecord>> preparedSXFRecords = new HashMap<>();
+        for (SXFRecord sxfRecord : sxfRecords) {
+            Local local = sxfRecord.getHeader().local;
+            if (!preparedSXFRecords.containsKey(local)) {
+                preparedSXFRecords.put(local, new ArrayList<SXFRecord>());
+            }
+            preparedSXFRecords.get(local).add(sxfRecord);
+        }
+        // Done prepare copy
+
+        String schemaName = sxf2PgsqlOptions.schemaName;
+        for (Local local : Local.values()) {
+            if (preparedSXFRecords.get(local) == null) {
+                continue;
+            }
+            String tableName = String.format("%s_%s", sxf2PgsqlOptions.tableName, local);
+            System.out.printf("COPY \"%s\".\"%s\" (\"excode\", \"number\", \"text\", \"semantics\", %s) FROM stdin;\n",
+                    schemaName,
+                    tableName,
+                    sxf2PgsqlOptions.geocolumnName);
+            for (SXFRecord sxfRecord : preparedSXFRecords.get(local)) {
+                System.out.printf(createCopy(sxfRecord));
+            }
+            System.out.printf("\\.\n");
+        }
+    }
+
+    private static String createCopy(SXFRecord sxfRecord) {
+        return String.format("%d\t%d\t%s\t%s\t%s\n",
+                sxfRecord.getHeader().excode,
+                sxfRecord.getHeader().number,
+                "text",
+                semanticsToPgArray(sxfRecord.getSemantics()),
+                Utils.geometryAsWKB(sxfRecord.getMetric().getGeometry()));
     }
 
     private static String createInsert(SXFRecord sxfRecord) {
@@ -287,6 +329,16 @@ public class Sxf2Pgsql {
         sxfRecord.destroy();
 
         return stringBuilder.toString();
+    }
+
+    private static String createIndex(Local local) {
+        return String.format("CREATE INDEX \"indx_%s_%s\" ON \"%s\".\"%s_%s\" USING GIST (\"%s\");\n",
+                sxf2PgsqlOptions.tableName.toLowerCase(),
+                local.toString().toLowerCase(),
+                sxf2PgsqlOptions.schemaName,
+                sxf2PgsqlOptions.tableName,
+                local,
+                sxf2PgsqlOptions.geocolumnName);
     }
 
     private static String getGeometryType(Local local) {
