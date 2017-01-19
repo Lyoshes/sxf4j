@@ -115,6 +115,10 @@ public class Sxf2Pgsql {
         try {
             commandLine = commandLineParser.parse(options, args);
 
+            if (commandLine.hasOption("help") || commandLine.getArgList().size() == 0) {
+                helpFormatter.printHelp("sxf2pgsql [<options>] <sxfile|dir> [[<schema>.]<table>]", options);
+            }
+
             if (commandLine.hasOption('s')) {
                 String srid = commandLine.getOptionValue('s');
                 String[] sridPair = srid.split(":");
@@ -229,10 +233,6 @@ public class Sxf2Pgsql {
                 if (sxf2PgsqlOptions.transaction) {
                     System.out.println("END;");
                 }
-            }
-
-            if (commandLine.hasOption("help") || commandLine.getArgList().size() == 0) {
-                helpFormatter.printHelp("sxf2pgsql [<options>] <sxfile|dir> [[<schema>.]<table>]", options);
             }
         } catch (ParseException e) {
             System.out.println(e.getMessage());
