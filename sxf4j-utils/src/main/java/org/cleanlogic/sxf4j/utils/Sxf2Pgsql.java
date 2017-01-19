@@ -170,18 +170,18 @@ public class Sxf2Pgsql {
             SXFReader sxfReader = new SXFReader(sxfReaderOptions);
 
             // Begin document
-            System.out.printf("SET CLIENT_ENCODING TO UTF8;\n");
-            System.out.printf("SET STANDARD_CONFORMING_STRINGS TO ON;\n");
+            System.out.println("SET CLIENT_ENCODING TO UTF8;");
+            System.out.println("SET STANDARD_CONFORMING_STRINGS TO ON;");
             // Create schema.table at once (use from command line params)
             if (sxf2PgsqlOptions.dropTable) {
-                System.out.printf(dropTables());
+                System.out.print(dropTables());
             }
             // Single table mode
             if (!useNomenclature) {
                 if (sxf2PgsqlOptions.transaction) {
-                    System.out.printf("BEGIN;\n");
+                    System.out.println("BEGIN;");
                 }
-                System.out.printf(createTables());
+                System.out.print(createTables());
             }
 
             for (File file : files) {
@@ -192,14 +192,14 @@ public class Sxf2Pgsql {
                     // Each file in separate transaction
                     if (useNomenclature) {
                         if (sxf2PgsqlOptions.transaction) {
-                            System.out.printf("BEGIN;\n");
+                            System.out.println("BEGIN;");
                         }
                         sxf2PgsqlOptions.tableName = sxfPassport.nomenclature;
                         int srid = Utils.detectSRID(sxfPassport);
                         if (srid != 0) {
                             sxf2PgsqlOptions.srcSRID = srid;
                         }
-                        System.out.printf(createTables());
+                        System.out.print(createTables());
                     }
                     if (!sxf2PgsqlOptions.pgdumpFormat) {
                         for (SXFRecord sxfRecord : sxfReader.getRecords()) {
@@ -211,10 +211,10 @@ public class Sxf2Pgsql {
                     if (useNomenclature) {
                         if (sxf2PgsqlOptions.spatialIndex) {
                             for (Local local : Local.values()) {
-                                System.out.printf(createIndex(local));
+                                System.out.print(createIndex(local));
                             }
                         }
-                        System.out.printf("END;\n");
+                        System.out.println("END;");
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -223,11 +223,11 @@ public class Sxf2Pgsql {
             if (!useNomenclature) {
                 if (sxf2PgsqlOptions.spatialIndex) {
                     for (Local local : Local.values()) {
-                        System.out.printf(createIndex(local));
+                        System.out.print(createIndex(local));
                     }
                 }
                 if (sxf2PgsqlOptions.transaction) {
-                    System.out.printf("END;\n");
+                    System.out.println("END;");
                 }
             }
 
@@ -264,11 +264,11 @@ public class Sxf2Pgsql {
             String schemaName = sxf2PgsqlOptions.schemaName;
             String tableName = String.format("%s_%s", sxf2PgsqlOptions.tableName, local);
             stringBuilder.append(String.format("CREATE TABLE \"%s\".\"%s\" (\n", schemaName, tableName));
-            stringBuilder.append("gid SERIAL PRIMARY KEY,\n");
-            stringBuilder.append("\"excode\" integer,\n");
-            stringBuilder.append("\"number\" integer,\n");
-            stringBuilder.append("\"text\" text,\n");
-            stringBuilder.append("\"semantics\" varchar[]);\n");
+            stringBuilder.append("\t\"gid\" SERIAL PRIMARY KEY,\n");
+            stringBuilder.append("\t\"excode\" integer,\n");
+            stringBuilder.append("\t\"number\" integer,\n");
+            stringBuilder.append("\t\"text\" text,\n");
+            stringBuilder.append("\t\"semantics\" varchar[]);\n");
 
             String geometryType = getGeometryType(local);
             stringBuilder.append(String.format("SELECT AddGeometryColumn('%s', '%s', '%s', '%s', '%s', %d);\n",
@@ -305,7 +305,7 @@ public class Sxf2Pgsql {
                     tableName,
                     sxf2PgsqlOptions.geocolumnName);
             for (SXFRecord sxfRecord : preparedSXFRecords.get(local)) {
-                System.out.printf(createCopy(sxfRecord));
+                System.out.printf("%s", createCopy(sxfRecord));
             }
             System.out.printf("\\.\n");
         }
@@ -316,7 +316,7 @@ public class Sxf2Pgsql {
                 sxfRecord.getHeader().excode,
                 sxfRecord.getHeader().number,
                 "text",
-                semanticsToPgArray(sxfRecord.getSemantics()),
+                semanticsToPgArray(sxfRecord.getSemantics(), true),
                 Utils.geometryAsWKB(sxfRecord.getMetric().getGeometry()));
     }
 
@@ -370,6 +370,10 @@ public class Sxf2Pgsql {
     }
 
     private static String semanticsToPgArray(List<SXFRecordSemantic> sxfRecordSemantics) {
+        return semanticsToPgArray(sxfRecordSemantics, false);
+    }
+
+    private static String semanticsToPgArray(List<SXFRecordSemantic> sxfRecordSemantics, boolean copy) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("{");
         for (int i = 0; i < sxfRecordSemantics.size(); i++) {
@@ -377,12 +381,21 @@ public class Sxf2Pgsql {
             if (i != 0) {
                 stringBuilder.append(",");
             }
-            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\\", "\\\\\\");
-            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\n", "\\\\n");
-            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\r", "\\\\r");
-            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\t", "\\\\t");
-            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\"", "\\\"");
-            sxfRecordSemantic.value = sxfRecordSemantic.value.replace("'", "''");
+
+            if (!copy) {
+                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\\", "\\\\\\");
+                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\n", "\\\\n");
+                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\r", "\\\\r");
+                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\t", "\\\\t");
+                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\"", "\\\"");
+                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("'", "''");
+            } else {
+                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\\", "\\\\\\\\");
+                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\n", "\\\\\\n");
+                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\r", "\\\\\\r");
+                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\t", "\\\\\\t");
+                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\"", "\\\\\"");
+            }
             stringBuilder.append(String.format("{\"%s\",\"%s\"}", sxfRecordSemantic.code, sxfRecordSemantic.value));
         }
         stringBuilder.append("}");

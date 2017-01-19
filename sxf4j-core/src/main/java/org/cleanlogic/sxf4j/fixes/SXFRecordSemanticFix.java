@@ -44,6 +44,7 @@ public class SXFRecordSemanticFix {
                 result += (char) b;
             }
         }
+//        result = result.replaceAll("\\p{Cc}", "");
         return result;
     }
 }
