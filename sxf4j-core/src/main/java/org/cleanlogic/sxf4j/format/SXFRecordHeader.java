@@ -149,9 +149,13 @@ public class SXFRecordHeader {
      */
     public int groupNumber;
     /**
-     * Metric point count for big objects if subjectCount + pointCount == 65535 (0xFFFF)
+     * Metric point count for big objects if metricDescription == 65535 (0xFFFF)
      */
     public int bigRecordPointCount;
+    /**
+     * Metric description. subjectCount and pointCount from this.
+     */
+    public int metricDescription;
     /**
      * Total subject count
      */

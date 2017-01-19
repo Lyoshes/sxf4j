@@ -90,7 +90,7 @@ public class SXFRecordMetricReader {
         // After main metric may be text metric
         List<SXFRecordMetricText> sxfRecordMetricTexts = new ArrayList<>();
         if (sxfRecordHeader.isText) {
-            SXFRecordMetricText sxfRecordMetricText = readText();
+            SXFRecordMetricText sxfRecordMetricText = readText(sxfRecordHeader.isUnicode);
             sxfRecordMetricTexts.add(sxfRecordMetricText);
         }
 
@@ -125,7 +125,7 @@ public class SXFRecordMetricReader {
             subrecordsDstCoordinates.add(subrecordDstCoordinates);
             // Text of subjects
             if (sxfRecordHeader.isText) {
-                SXFRecordMetricText sxfRecordMetricText = readText();
+                SXFRecordMetricText sxfRecordMetricText = readText(sxfRecordHeader.isUnicode);
                 sxfRecordMetricTexts.add(sxfRecordMetricText);
             }
         }
@@ -212,16 +212,22 @@ public class SXFRecordMetricReader {
      * Read text of metric and they align. Function not will be used directly!
      * @return {@link SXFRecordMetricText}
      */
-    private SXFRecordMetricText readText() {
+    private SXFRecordMetricText readText(boolean isUnicode) {
         int length = (int) _mappedByteBuffer.get();
+
         byte[] string = new byte[length];
         _mappedByteBuffer.get(string);
         String text = null;
         try {
-            text = new String(string, TextEncoding.CP1251.getName());
+            if (!isUnicode) {
+                text = new String(string, TextEncoding.CP1251.getName());
+            } else {
+                text = new String(string);
+            }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+
         // Close binary \0
         _mappedByteBuffer.get();
         // Calculate align of text
@@ -230,7 +236,7 @@ public class SXFRecordMetricReader {
             if ((length - text.trim().length()) >= 3) {
                 for (int i = 0; i < text.length(); i++) {
                     char c = text.charAt(i);
-                    if (c == '\0') {
+                    if (c == '\0' && i != text.length() - 1) {
                         c = text.charAt(i + 1);
                         align = TextMetricAlign.fromValue((int) c);
                         break;

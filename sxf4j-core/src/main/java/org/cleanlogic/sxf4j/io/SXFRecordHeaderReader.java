@@ -100,24 +100,7 @@ class SXFRecordHeaderReader {
                 sxfRecordHeader.is3D = ((infoFlags[2] >> 1) & 0x1) == 1;
                 sxfRecordHeader.isFloat = ((infoFlags[2] >> 2) & 0x1) == 1;
                 sxfRecordHeader.isText = ((infoFlags[2] >> 3) & 0x1) == 1;
-
-                switch (metricElementSize) {
-                    case 0:
-                        if (!sxfRecordHeader.isFloat) {
-                            sxfRecordHeader.metricElementSize = MetricElementSize.SHORT;
-                        } else {
-                            sxfRecordHeader.metricElementSize = MetricElementSize.FLOAT;
-                        }
-                        break;
-                    case 1:
-                        if (!sxfRecordHeader.isFloat) {
-                            sxfRecordHeader.metricElementSize = MetricElementSize.INT;
-                        } else {
-                            sxfRecordHeader.metricElementSize = MetricElementSize.DOUBLE;
-                        }
-                        break;
-                        default: break;
-                }
+                sxfRecordHeader.metricElementSize = getMetricElementSizeEnum(metricElementSize, sxfRecordHeader.isFloat);
 
                 byte generalization = _mappedByteBuffer.get();
                 sxfRecordHeader.bottom = generalization & 0xF;
@@ -125,9 +108,9 @@ class SXFRecordHeaderReader {
 
                 sxfRecordHeader.groupNumber = _mappedByteBuffer.getInt();
 
-                int metricDescription = _mappedByteBuffer.getInt();
-                sxfRecordHeader.subjectCount = metricDescription & 0xFFFF;
-                sxfRecordHeader.pointCount = (metricDescription >> 16) & 0xFFFF;
+                sxfRecordHeader.metricDescription = _mappedByteBuffer.getInt();
+                sxfRecordHeader.subjectCount = sxfRecordHeader.metricDescription & 0xFFFF;//_mappedByteBuffer.getShort();
+                sxfRecordHeader.pointCount = (sxfRecordHeader.metricDescription >> 16) & 0xFFFF;//_mappedByteBuffer.getShort();
 
                 sxfRecordHeader.metricOffset = _mappedByteBuffer.position();
                 sxfRecordHeader.semanticOffset = sxfRecordHeader.metricOffset + sxfRecordHeader.metricLength;
@@ -201,23 +184,7 @@ class SXFRecordHeaderReader {
                 sxfRecordHeader.isGraphic = ((infoFlags[2] >> 4) & 0x1) == 1;
                 sxfRecordHeader.isGraphicScale = ((infoFlags[2] >> 5) & 0x1) == 1;
                 sxfRecordHeader.spline = Spline.fromValue((infoFlags[2] >> 6) & 0x3);
-                switch (metricElementSize) {
-                    case 0:
-                        if (!sxfRecordHeader.isFloat) {
-                            sxfRecordHeader.metricElementSize = MetricElementSize.SHORT;
-                        } else {
-                            sxfRecordHeader.metricElementSize = MetricElementSize.FLOAT;
-                        }
-                        break;
-                    case 1:
-                        if (!sxfRecordHeader.isFloat) {
-                            sxfRecordHeader.metricElementSize = MetricElementSize.INT;
-                        } else {
-                            sxfRecordHeader.metricElementSize = MetricElementSize.DOUBLE;
-                        }
-                        break;
-                        default: break;
-                }
+                sxfRecordHeader.metricElementSize = getMetricElementSizeEnum(metricElementSize, sxfRecordHeader.isFloat);
 
                 byte generalization = _mappedByteBuffer.get();
                 sxfRecordHeader.bottom = generalization & 0xF;
@@ -225,8 +192,9 @@ class SXFRecordHeaderReader {
 
                 sxfRecordHeader.bigRecordPointCount = _mappedByteBuffer.getInt();
 
-                sxfRecordHeader.subjectCount = _mappedByteBuffer.getShort();
-                sxfRecordHeader.pointCount = _mappedByteBuffer.getShort();
+                sxfRecordHeader.metricDescription = _mappedByteBuffer.getInt();
+                sxfRecordHeader.subjectCount = sxfRecordHeader.metricDescription & 0xFFFF;//_mappedByteBuffer.getShort();
+                sxfRecordHeader.pointCount = (sxfRecordHeader.metricDescription >> 16) & 0xFFFF;//_mappedByteBuffer.getShort();
 
                 sxfRecordHeader.metricOffset = _mappedByteBuffer.position();
                 sxfRecordHeader.semanticOffset = sxfRecordHeader.metricOffset + sxfRecordHeader.metricLength;
@@ -249,5 +217,27 @@ class SXFRecordHeaderReader {
                 System.out.printf("Warning!!! Descriptor record count is %d, but readed records is %d\n", _sxfDescriptor.recordCount, _sxfRecordHeaders.size());
             }
         }
+    }
+
+    private MetricElementSize getMetricElementSizeEnum(int metricElementSize, boolean isFloat) {
+        MetricElementSize metricElementSizeEnum = null;
+        switch (metricElementSize) {
+            case 0:
+                if (!isFloat) {
+                    metricElementSizeEnum = MetricElementSize.SHORT;
+                } else {
+                    metricElementSizeEnum = MetricElementSize.FLOAT;
+                }
+                break;
+            case 1:
+                if (!isFloat) {
+                    metricElementSizeEnum = MetricElementSize.INT;
+                } else {
+                    metricElementSizeEnum = MetricElementSize.DOUBLE;
+                }
+                break;
+            default: break;
+        }
+        return metricElementSizeEnum;
     }
 }
