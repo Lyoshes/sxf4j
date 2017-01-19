@@ -30,33 +30,24 @@ public class SXFRecordMetricReader {
     private final GeometryFactory _srcGeometryFactory;
     private GeometryFactory _dstGeometryFactory;
 
-    private PROJ _PROJ;
-    private CTS  _CTS;
-
     public SXFRecordMetricReader(SXFPassport sxfPassport) {
         _sxfPassport = sxfPassport;
         _mappedByteBuffer = sxfPassport.getMappedByteBuffer();
         _sxfReaderOptions = sxfPassport.getReaderOptions();
 
-        int srcSRID = sxfPassport.epsg;
+        int srcSRID = _sxfReaderOptions.srcSRID;
         if (srcSRID == 0) {
-            srcSRID = Utils.detectSRID(sxfPassport);
+            srcSRID = _sxfPassport.epsg;
             if (srcSRID == 0) {
-                srcSRID = sxfPassport.getReaderOptions().srcSRID;
+                srcSRID = Utils.detectSRID(_sxfPassport);
+                if (srcSRID == 0) {
+                    srcSRID = _sxfPassport.getReaderOptions().srcSRID;
+                }
             }
         }
 
-        if (_sxfReaderOptions.dstSRID != 0 && _sxfReaderOptions.dstSRID != _sxfReaderOptions.srcSRID) {
-            _PROJ = new PROJ(srcSRID, _sxfReaderOptions.dstSRID);
-//            try {
-//                _CTS = new CTS(srcSRID, _sxfReaderOptions.dstSRID);
-//            } catch (CRSException e) {
-//                e.printStackTrace();
-//            }
-        }
-
         _srcGeometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), srcSRID);
-        if (_PROJ != null) {
+        if (_sxfReaderOptions.proj != null) {
             _dstGeometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), _sxfReaderOptions.dstSRID);
         }
     }
@@ -74,16 +65,16 @@ public class SXFRecordMetricReader {
                 coordinate = new Coordinate(coordinate.y, coordinate.x, coordinate.z);
             }
             recordSrcCoordinates.add(coordinate);
-            if (_PROJ != null) {
-                recordDstCoordinates.add(_PROJ.doConvert(coordinate));
+            if (_sxfReaderOptions.proj != null) {
+                recordDstCoordinates.add(_sxfReaderOptions.proj.doConvert(coordinate));
             }
-            if (_CTS != null) {
-                try {
-                    recordDstCoordinates.add(_CTS.doConvert(coordinate));
-                } catch (IllegalCoordinateException e) {
-                    e.printStackTrace();
-                }
-            }
+//            if (_CTS != null) {
+//                try {
+//                    recordDstCoordinates.add(_CTS.doConvert(coordinate));
+//                } catch (IllegalCoordinateException e) {
+//                    e.printStackTrace();
+//                }
+//            }
         }
         // After main metric may be text metric
         List<SXFRecordMetricText> sxfRecordMetricTexts = new ArrayList<>();
@@ -108,16 +99,16 @@ public class SXFRecordMetricReader {
                     coordinate = new Coordinate(coordinate.y, coordinate.x, coordinate.z);
                 }
                 subrecordSrcCoordinates.add(coordinate);
-                if (_PROJ != null) {
-                    subrecordDstCoordinates.add(_PROJ.doConvert(coordinate));
+                if (_sxfReaderOptions.proj != null) {
+                    subrecordDstCoordinates.add(_sxfReaderOptions.proj.doConvert(coordinate));
                 }
-                if (_CTS != null) {
-                    try {
-                        subrecordDstCoordinates.add(_CTS.doConvert(coordinate));
-                    } catch (IllegalCoordinateException e) {
-                        e.printStackTrace();
-                    }
-                }
+//                if (_CTS != null) {
+//                    try {
+//                        subrecordDstCoordinates.add(_CTS.doConvert(coordinate));
+//                    } catch (IllegalCoordinateException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
             }
             subrecordsSrcCoordinates.add(subrecordSrcCoordinates);
             subrecordsDstCoordinates.add(subrecordDstCoordinates);

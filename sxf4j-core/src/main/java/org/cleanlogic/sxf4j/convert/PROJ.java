@@ -47,6 +47,14 @@ public class PROJ {
         _coordinateTransform = coordinateTransformFactory.createTransform(srcCRS, dstCRS);
     }
 
+    public int getSrcSRID() {
+        return _coordinateTransform.getSourceCRS().getProjection().getEPSGCode();
+    }
+
+    public int getDstSRID() {
+        return _coordinateTransform.getTargetCRS().getProjection().getEPSGCode();
+    }
+
     /**
      * Converts coodrinates from source SRID to destination SRID
      * @param srcCoordinate {@link Coordinate} coordinate in source SRID

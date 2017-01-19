@@ -1,10 +1,12 @@
 package org.cleanlogic.sxf4j.io;
 
 import org.cleanlogic.sxf4j.SXF;
+import org.cleanlogic.sxf4j.convert.PROJ;
 import org.cleanlogic.sxf4j.exceptions.SXFWrongFormatException;
 import org.cleanlogic.sxf4j.format.SXFDescriptor;
 import org.cleanlogic.sxf4j.format.SXFPassport;
 import org.cleanlogic.sxf4j.format.SXFRecord;
+import org.cleanlogic.sxf4j.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,6 +96,26 @@ public class SXFReader {
         // Read passport of SXF
         SXFPassportReader sxfPassportReader = new SXFPassportReader(mappedByteBuffer, _sxfReaderOptions);
         _sxfPassport = sxfPassportReader.read();
+
+        if (_sxfPassport != null) {
+            if (_sxfReaderOptions.dstSRID != 0 && _sxfReaderOptions.dstSRID != _sxfReaderOptions.srcSRID) {
+                int srcSRID = _sxfPassport.epsg;
+                if (srcSRID == 0) {
+                    srcSRID = Utils.detectSRID(_sxfPassport);
+                    if (srcSRID == 0) {
+                        srcSRID = _sxfPassport.getReaderOptions().srcSRID;
+                    }
+                }
+                _sxfReaderOptions.srcSRID = srcSRID;
+
+                _sxfReaderOptions.proj = new PROJ(srcSRID, _sxfReaderOptions.dstSRID);
+//            try {
+//                _CTS = new CTS(srcSRID, _sxfReaderOptions.dstSRID);
+//            } catch (CRSException e) {
+//                e.printStackTrace();
+//            }
+            }
+        }
 
         SXFDescriptorReader sxfDescriptorReader = new SXFDescriptorReader(_sxfPassport);
         _sxfDescriptor = sxfDescriptorReader.read();

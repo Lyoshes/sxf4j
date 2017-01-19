@@ -1,5 +1,6 @@
 package org.cleanlogic.sxf4j.io;
 
+import org.cleanlogic.sxf4j.convert.PROJ;
 import org.cleanlogic.sxf4j.fixes.SXFPassportFixes;
 
 /**
@@ -11,4 +12,6 @@ public class SXFReaderOptions {
     public int dstSRID = 0;
     public boolean flipCoordinates = false;
 //    public SXFPassportFixes.FixCoordinates fixCoordinates = SXFPassportFixes.FixCoordinates.SKIP;
+
+    public PROJ proj = null;
 }
