@@ -90,7 +90,11 @@ public enum TextMetricAlign {
      * @return enum by integer.
      */
     public static TextMetricAlign fromValue(int value) {
-        return _intToEnumMap.get(value);
+        TextMetricAlign textMetricAlign = _intToEnumMap.get(value);
+        if (textMetricAlign == null) {
+            textMetricAlign = BASELINE_LEFT;
+        }
+        return textMetricAlign;
     }
 
     /**
