@@ -64,12 +64,16 @@ public class SXFRecordMetricReader {
     }
 
     public SXFRecordMetric read(SXFRecordHeader sxfRecordHeader) {
+//        System.err.printf("%d\n", sxfRecordHeader.number);
         _mappedByteBuffer.position((int) sxfRecordHeader.metricOffset);
 
         List<Coordinate> recordSrcCoordinates = new ArrayList<>();
         List<Coordinate> recordDstCoordinates = new ArrayList<>();
 
-        for (int i = 0; i < sxfRecordHeader.pointCount; i++) {
+        // Big objects
+        int pointCount = (sxfRecordHeader.pointCount == 65535) ? sxfRecordHeader.bigRecordPointCount : sxfRecordHeader.pointCount;
+
+        for (int i = 0; i < pointCount; i++) {
             Coordinate coordinate = readCoordinate(sxfRecordHeader, _sxfReaderOptions.flipCoordinates);
             coordinate = _sxfPassport.fromDescret(coordinate);
             if (_sxfReaderOptions.flipCoordinates) {
@@ -99,8 +103,9 @@ public class SXFRecordMetricReader {
         // Process subject
         for (int i = 0; i < sxfRecordHeader.subjectCount; i++) {
             // First two bytes is reserver, skip them
-            _mappedByteBuffer.position(_mappedByteBuffer.position() + 2);
-            int pointCount = _mappedByteBuffer.getShort();
+//            _mappedByteBuffer.position(_mappedByteBuffer.position() + 2);
+            _mappedByteBuffer.getShort();
+            pointCount = _mappedByteBuffer.getShort();
             List<Coordinate> subrecordSrcCoordinates =  new ArrayList<>();
             List<Coordinate> subrecordDstCoordinates =  new ArrayList<>();
             for (int k = 0; k < pointCount; k++) {
@@ -213,37 +218,39 @@ public class SXFRecordMetricReader {
      * @return {@link SXFRecordMetricText}
      */
     private SXFRecordMetricText readText(boolean isUnicode) {
-        int length = (int) _mappedByteBuffer.get();
-
+        int length = _mappedByteBuffer.get() & 0xFF;
         byte[] string = new byte[length];
         _mappedByteBuffer.get(string);
-        String text = null;
+        // Final 0x00 by documentation
+        byte zero   = _mappedByteBuffer.get();
+        int strlen = 0;
+        for (byte b : string) {
+            if (b == 0x00) {
+                break;
+            }
+            strlen++;
+        }
+        String text = "";
         try {
             if (!isUnicode) {
-                text = new String(string, TextEncoding.CP1251.getName());
+                text = new String(string, TextEncoding.CP1251.getName()).substring(0, strlen).intern();
             } else {
-                text = new String(string);
+                text = new String(string).substring(0, strlen).intern();
             }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-
-        // Close binary \0
-        _mappedByteBuffer.get();
-        // Calculate align of text
-        TextMetricAlign align = TextMetricAlign.MIDDLE_LEFT;
-        if (text != null) {
-            if ((length - text.trim().length()) >= 3) {
-                for (int i = 0; i < text.length(); i++) {
-                    char c = text.charAt(i);
-                    if (c == '\0' && i != text.length() - 1) {
-                        c = text.charAt(i + 1);
-                        align = TextMetricAlign.fromValue((int) c);
-                        break;
-                    }
-                }
+        TextMetricAlign align = TextMetricAlign.BASELINE_LEFT;
+        if (strlen + 1 < length) {
+            byte c = string[strlen + 1];
+            align = TextMetricAlign.fromValue(c);
+        } else {
+            // If final zero != 0x00, use them
+            if (zero != 0x00) {
+                align = TextMetricAlign.fromValue(zero);
             }
         }
+
         return new SXFRecordMetricText(text, align);
     }
 
