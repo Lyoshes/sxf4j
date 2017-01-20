@@ -50,7 +50,7 @@ public class SXFRecordSemanticReader {
             sxfRecordSemantic.code = _mappedByteBuffer.getShort();
             byte[] lengthCode = new byte[2];
             _mappedByteBuffer.get(lengthCode);
-            int type = lengthCode[0];
+            int type = lengthCode[0] & 0xFF;
             int scale = lengthCode[1];
             // Bytes left to read
             totalBytes -= 4;
@@ -80,11 +80,8 @@ public class SXFRecordSemanticReader {
                         break;
                     }
                 } else {
-                    if (sxfRecordSemantic.scale > 255) {
-                        break;
-                    } else if (sxfRecordSemantic.scale + 1 < 0) {
-                        break;
-                    }
+                    // Texts can't have negative length!
+                    sxfRecordSemantic.scale = sxfRecordSemantic.scale & 0xFF;
                 }
 
                 switch (sxfRecordSemantic.type) {
