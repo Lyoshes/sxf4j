@@ -129,4 +129,12 @@ public enum TextMetricAlign {
     public static String getName(TextMetricAlign textMetricAlign) {
         return _names.get(textMetricAlign);
     }
+
+    public TextHorizontalAlign getTextHorizontalAlign() {
+        return  (_value - BASELINE_LEFT.getValue()) < 12 ? TextHorizontalAlign.TableHorizontalAlign[_value - BASELINE_LEFT.getValue()] : TextHorizontalAlign.LEFT;
+    }
+
+    public TextVerticalAlign getTextVericalAlign() {
+        return (_value - BASELINE_LEFT.getValue()) < 12 ? TextVerticalAlign.TableTextVerticalAlign[_value - BASELINE_LEFT.getValue()] : TextVerticalAlign.BASELINE;
+    }
 }

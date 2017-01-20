@@ -56,6 +56,13 @@ public enum TextHorizontalAlign {
         }
     }
 
+    static final TextHorizontalAlign[] TableHorizontalAlign = new TextHorizontalAlign[] {
+            LEFT, RIGHT, CENTER,
+            LEFT, RIGHT, CENTER,
+            LEFT, RIGHT, CENTER,
+            LEFT, RIGHT, CENTER
+    };
+
     /**
      * Current value of enum.
      */

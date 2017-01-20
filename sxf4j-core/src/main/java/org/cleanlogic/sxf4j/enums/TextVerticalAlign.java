@@ -61,6 +61,13 @@ public enum TextVerticalAlign {
         }
     }
 
+    static final TextVerticalAlign[] TableTextVerticalAlign = new TextVerticalAlign[] {
+            BASELINE, BASELINE, BASELINE,
+            MIDDLE,   MIDDLE,   MIDDLE,
+            TOP,      TOP,      TOP,
+            BOTTOM,   BOTTOM,   BOTTOM
+    };
+
     /**
      * Current value of enum.
      */
