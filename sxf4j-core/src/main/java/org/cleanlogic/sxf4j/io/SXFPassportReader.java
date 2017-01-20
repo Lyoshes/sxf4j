@@ -126,17 +126,21 @@ public class SXFPassportReader {
 
         byte[] createDate = new byte[10];
         _mappedByteBuffer.get(createDate);
-        _sxfPassport.createDate = new String(createDate).trim();
+        _sxfPassport.createDate = new String(createDate).trim().intern();
 
         byte[] nomenclature = new byte[24];
         _mappedByteBuffer.get(nomenclature);
-        _sxfPassport.nomenclature = new String(nomenclature).trim();
+        try {
+            _sxfPassport.nomenclature = new String(nomenclature, TextEncoding.IBM866.getName()).trim().intern();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         _sxfPassport.scale = _mappedByteBuffer.getInt();
 
         byte[] name = new byte[26];
         _mappedByteBuffer.get(name);
         try {
-            _sxfPassport.name = new String(name, TextEncoding.IBM866.getName()).trim();
+            _sxfPassport.name = new String(name, TextEncoding.IBM866.getName()).trim().intern();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -235,17 +239,21 @@ public class SXFPassportReader {
 
         byte[] createDate = new byte[12];
         _mappedByteBuffer.get(createDate);
-        _sxfPassport.createDate = new String(createDate).trim();
+        _sxfPassport.createDate = new String(createDate).trim().intern();
 
         byte[] nomenclature = new byte[32];
         _mappedByteBuffer.get(nomenclature);
-        _sxfPassport.nomenclature = new String(nomenclature).trim();
+        try {
+            _sxfPassport.nomenclature = new String(nomenclature, TextEncoding.CP1251.getName()).trim().intern();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         _sxfPassport.scale = _mappedByteBuffer.getInt();
 
         byte[] name = new byte[32];
         _mappedByteBuffer.get(name);
         try {
-            _sxfPassport.name = new String(name, TextEncoding.CP1251.getName()).trim();
+            _sxfPassport.name = new String(name, TextEncoding.CP1251.getName()).trim().intern();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -306,7 +314,7 @@ public class SXFPassportReader {
         _sxfPassport.yearMagneticAngle = _mappedByteBuffer.getDouble() * 180.0 / Math.PI;
         byte[] dateAngle = new byte[12];
         _mappedByteBuffer.get(dateAngle);
-        _sxfPassport.dateAngle = new String(dateAngle).trim();
+        _sxfPassport.dateAngle = new String(dateAngle).trim().intern();
         _sxfPassport.msk63Zone = _mappedByteBuffer.getInt();
         _sxfPassport.reliefHeight = _mappedByteBuffer.getDouble();
 
