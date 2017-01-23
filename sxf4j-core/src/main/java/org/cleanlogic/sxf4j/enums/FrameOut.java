@@ -24,10 +24,25 @@ import java.util.Map;
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 public enum FrameOut {
+    /**
+     * Нет выходов нa paмку
+     */
     NO_FRAME_OUT(0),
+    /**
+     * Северная рамка
+     */
     NORTH(8),
+    /**
+     * Восточная рамка
+     */
     EAST(4),
+    /**
+     * Южная рамка
+     */
     SOUTH(2),
+    /**
+     * Западная рамка
+     */
     WEST(1);
     /**
      * Map contains all enums names. Its will be used in ComboBox's and etc.
