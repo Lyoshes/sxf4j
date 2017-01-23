@@ -100,10 +100,10 @@ public class SxfInfo {
             sxfReaderOptions.quite = commandLine.hasOption("quiet");
             sxfReaderOptions.flipCoordinates = commandLine.hasOption('f');
             if (commandLine.hasOption("srid")) {
-                String srid = commandLine.getOptionValue("srid");
-                if (srid.split(":").length == 2) {
-                    sxfReaderOptions.srcSRID = Integer.parseInt(srid.split(":")[0]);
-                    sxfReaderOptions.dstSRID = Integer.parseInt(srid.split(":")[1]);
+                String[] sridPair = commandLine.getOptionValue("srid").split(":");
+                if (sridPair.length == 2) {
+                    sxfReaderOptions.srcSRID = Integer.parseInt(sridPair[0]);
+                    sxfReaderOptions.dstSRID = Integer.parseInt(sridPair[1]);
                 }
             }
 
@@ -160,6 +160,9 @@ public class SxfInfo {
                     int value = Integer.parseInt(recordPair[1]);
                     if (type.equalsIgnoreCase("incode")) {
                         SXFRecord sxfRecord = sxfReader.getRecordByIncode(value);
+                        if (sxfRecord == null) {
+                            return;
+                        }
                         if (commandLine.hasOption("record")) {
                             sxfRecord.getHeader().print();
                             if (sxfRecord.getHeader().isText) {
@@ -188,6 +191,9 @@ public class SxfInfo {
                         }
                     } else if (type.equalsIgnoreCase("number")) {
                         SXFRecord sxfRecord = sxfReader.getRecordByNumber(value);
+                        if (sxfRecord == null) {
+                            return;
+                        }
                         if (commandLine.hasOption("record")) {
                             sxfRecord.getHeader().print();
                             if (sxfRecord.getHeader().isText) {

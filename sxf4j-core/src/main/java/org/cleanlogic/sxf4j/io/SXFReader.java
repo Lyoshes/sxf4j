@@ -114,22 +114,17 @@ public class SXFReader {
         _sxfPassport = sxfPassportReader.read();
 
         if (_sxfPassport != null) {
-            if (_sxfReaderOptions.dstSRID != 0 && _sxfReaderOptions.dstSRID != _sxfReaderOptions.srcSRID) {
-                int srcSRID = _sxfPassport.epsg;
+            if (_sxfPassport.getReaderOptions().dstSRID != 0 && _sxfPassport.getReaderOptions().dstSRID != _sxfPassport.getReaderOptions().srcSRID) {
+                int srcSRID = _sxfPassport.srid;
                 if (srcSRID == 0) {
                     srcSRID = Utils.detectSRID(_sxfPassport);
                     if (srcSRID == 0) {
                         srcSRID = _sxfPassport.getReaderOptions().srcSRID;
                     }
                 }
-                _sxfReaderOptions.srcSRID = srcSRID;
+                _sxfPassport.getReaderOptions().srcSRID = srcSRID;
 
-                _sxfReaderOptions.proj = new PROJ(srcSRID, _sxfReaderOptions.dstSRID);
-//            try {
-//                _CTS = new CTS(srcSRID, _sxfReaderOptions.dstSRID);
-//            } catch (CRSException e) {
-//                e.printStackTrace();
-//            }
+                _sxfReaderOptions.proj = new PROJ(_sxfPassport.getReaderOptions().srcSRID, _sxfPassport.getReaderOptions().dstSRID);
             }
         }
 

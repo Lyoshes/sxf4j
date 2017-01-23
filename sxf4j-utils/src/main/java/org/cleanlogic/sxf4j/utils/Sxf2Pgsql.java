@@ -170,6 +170,7 @@ public class Sxf2Pgsql {
             SXFReaderOptions sxfReaderOptions = new SXFReaderOptions();
             sxfReaderOptions.flipCoordinates = true;
             if (!commandLine.hasOption("t")) {
+                sxfReaderOptions.srcSRID = sxf2PgsqlOptions.srcSRID;
                 sxfReaderOptions.dstSRID = sxf2PgsqlOptions.dstSRID;
             }
             SXFReader sxfReader = new SXFReader(sxfReaderOptions);
@@ -178,7 +179,7 @@ public class Sxf2Pgsql {
             System.out.println("SET CLIENT_ENCODING TO UTF8;");
             System.out.println("SET STANDARD_CONFORMING_STRINGS TO ON;");
             // Create schema.table at once (use from command line params)
-            if (sxf2PgsqlOptions.dropTable) {
+            if (!useNomenclature && sxf2PgsqlOptions.dropTable) {
                 System.out.print(dropTables());
             }
             // Single table mode
@@ -193,13 +194,15 @@ public class Sxf2Pgsql {
                 try {
                     sxfReader.read(file);
                     SXFPassport sxfPassport = sxfReader.getPassport();
-
                     // Each file in separate transaction
                     if (useNomenclature) {
+                        sxf2PgsqlOptions.tableName = sxfPassport.nomenclature;
+                        if (sxf2PgsqlOptions.dropTable) {
+                            System.out.print(dropTables());
+                        }
                         if (sxf2PgsqlOptions.transaction) {
                             System.out.println("BEGIN;");
                         }
-                        sxf2PgsqlOptions.tableName = sxfPassport.nomenclature;
                         int srid = Utils.detectSRID(sxfPassport);
                         if (srid != 0) {
                             sxf2PgsqlOptions.srcSRID = srid;
