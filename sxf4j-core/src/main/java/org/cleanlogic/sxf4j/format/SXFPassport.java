@@ -82,7 +82,7 @@ public class SXFPassport {
     public int codeTypeFlag;
     public int generalizationFlag;
     public TextEncoding textEncodingFlag;
-    public int coordPrecisionFlag;
+    public CoordinatePrecision coordinatePrecisionFlag;
     public int orderViewSheetFlag;
 
     /**
@@ -93,7 +93,7 @@ public class SXFPassport {
     /**
      * EPSG code for coordinate system or 0
      */
-    public int epsg;
+    public int srid;
 
     /**
      * X
@@ -460,16 +460,16 @@ public class SXFPassport {
         System.out.printf("\t\tCodeTypeFlag:\t\t%d\n", sxfPassport.codeTypeFlag);
         System.out.printf("\t\tGeneralizationFlag:\t%d\n", sxfPassport.generalizationFlag);
         System.out.printf("\t\tTextEncodingFlag:\t%s (%s)\n", sxfPassport.textEncodingFlag, sxfPassport.textEncodingFlag.getName());
-        System.out.printf("\t\tCoordPrecisionFlag:\t%d\n", sxfPassport.coordPrecisionFlag);
+        System.out.printf("\t\tCoordPrecisionFlag:\t%s (%s)\n", sxfPassport.coordinatePrecisionFlag, sxfPassport.coordinatePrecisionFlag.getName());
         System.out.printf("\t\tSpecialSortFlag:\t%d\n", sxfPassport.orderViewSheetFlag);
         if (sxfPassport.version == SXF.VERSION_3) {
             System.out.printf("\tClassificator code:\t%d\n", sxfPassport.code);
         } else {
-            if (sxfPassport.epsg == 0) {
+            if (sxfPassport.srid == 0) {
                 int epsg = Utils.detectSRID(sxfPassport);
                 System.out.printf("\tEPSG:\t\t\t%d (Detected from passport constants)\n", epsg);
             } else {
-                System.out.printf("\tEPSG:\t\t\t%d\n", sxfPassport.epsg);
+                System.out.printf("\tEPSG:\t\t\t%d\n", sxfPassport.srid);
             }
         }
         System.out.printf("\tThe geometry coordinates of sheet corners:\n");

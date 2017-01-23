@@ -48,7 +48,7 @@ public class SXFRecordMetricReader {
 
         int srcSRID = _sxfReaderOptions.srcSRID;
         if (srcSRID == 0) {
-            srcSRID = _sxfPassport.epsg;
+            srcSRID = _sxfPassport.srid;
             if (srcSRID == 0) {
                 srcSRID = Utils.detectSRID(_sxfPassport);
                 if (srcSRID == 0) {

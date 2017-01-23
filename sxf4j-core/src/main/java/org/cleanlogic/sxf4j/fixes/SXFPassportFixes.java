@@ -35,6 +35,16 @@ public class SXFPassportFixes {
         FIX,
         SKIP
     }
+
+    /**
+     * Reset EPSG code to 0 if they 65537
+     * @param sxfPassport {@link SXFPassport} to fix
+     */
+    public static void FixEPSG(SXFPassport sxfPassport) {
+        if (sxfPassport.srid == 65537) {
+            sxfPassport.srid = 0;
+        }
+    }
     /**
      * Fix map init kind. This fix it if {@link SXFPassport#materialKind} not in enum, set {@link MapInitKind#MAP} by default.
      * @param sxfPassport {@link SXFPassport} to fix.

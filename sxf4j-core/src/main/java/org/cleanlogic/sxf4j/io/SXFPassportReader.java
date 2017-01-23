@@ -111,6 +111,7 @@ public class SXFPassportReader {
             readVersion4();
         }
 
+        SXFPassportFixes.FixEPSG(_sxfPassport);
         SXFPassportFixes.FixMapInitKind(_sxfPassport);
         SXFPassportFixes.FixMapInitType(_sxfPassport);
         SXFPassportFixes.FixSXFPassportAxisMeridian(_sxfPassport);
@@ -266,10 +267,10 @@ public class SXFPassportReader {
         _sxfPassport.generalizationFlag = (infoFlags[0] >> 7) & 0x1;
 
         _sxfPassport.textEncodingFlag = TextEncoding.fromValue(infoFlags[1]);
-        _sxfPassport.coordPrecisionFlag = infoFlags[2];
+        _sxfPassport.coordinatePrecisionFlag = CoordinatePrecision.fromValue(infoFlags[2]);
         _sxfPassport.orderViewSheetFlag = infoFlags[3] & 0x1;
 
-        _sxfPassport.epsg = _mappedByteBuffer.getInt();
+        _sxfPassport.srid = _mappedByteBuffer.getInt();
 
         _sxfPassport.xSouthWest = _mappedByteBuffer.getDouble();
         _sxfPassport.ySouthWest = _mappedByteBuffer.getDouble();
