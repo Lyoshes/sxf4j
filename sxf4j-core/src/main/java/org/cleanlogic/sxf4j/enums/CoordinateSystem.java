@@ -115,6 +115,9 @@ public enum CoordinateSystem {
      * @return enum by integer.
      */
     public static CoordinateSystem fromValue(int value) {
+        if (value == 0 || value == 255) {
+            return UNDEFINED;
+        }
         return _intToEnumMap.get(value);
     }
 

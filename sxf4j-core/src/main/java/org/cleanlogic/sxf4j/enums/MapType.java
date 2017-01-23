@@ -111,11 +111,7 @@ public enum MapType {
     /**
      * Карта в системе координат ГСК-2011
      */
-    GSKMAP(21),
-    /**
-     * Крайнее значение типа карты
-     */
-    MAPTYPELIMIT(21);
+    GSKMAP(21);
 
     /**
      * Map contains all enums names. Its will be used in ComboBox's and etc.
@@ -144,7 +140,6 @@ public enum MapType {
         _names.put(MERCATOR, "Цилиндрическая Меркатора (EPSG:3395, EPSG:3857)");
         _names.put(SEANAUTIC, "Морская навигационная (Mercator_2SP), можно выбрать эллипсоид (Цилиндрическая равноугольная Меркатора на эллипсоиде WGS84)");
         _names.put(GSKMAP, "Карта в системе координат ГСК-2011");
-        _names.put(MAPTYPELIMIT, "Крайнее значение типа карты");
     }
     /**
      * Map contains integer (value) and enum object.
@@ -175,6 +170,9 @@ public enum MapType {
      * @return enum by integer.
      */
     public static MapType fromValue(int value) {
+        if (value == 0 || value == 255 || value == -1) {
+            return UNDEFINED;
+        }
         return _intToEnumMap.get(value);
     }
 

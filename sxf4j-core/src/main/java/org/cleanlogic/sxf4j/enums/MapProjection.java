@@ -219,7 +219,6 @@ public enum MapProjection {
         _names.put(MILLERCYLINDRICAL, "Цилиндрическая Миллера на шаре ESRI:54003");
         _names.put(WEBMERCATOR, "(Google) Popular Visualisation Pseudo Mercator EPSG:3857 (900913)");
         _names.put(MERCATOR_2SP, "Цилиндрическая прямая равноугольная Меркатора");
-        _names.put(LASTPROJECTIONNUMBER, "Крайний номер проекции");
     }
     /**
      * Map contains integer (value) and enum object.
@@ -250,6 +249,9 @@ public enum MapProjection {
      * @return enum by integer.
      */
     public static MapProjection fromValue(int value) {
+        if (value == 0 || value == 255) {
+            return UNDEFINED;
+        }
         return _intToEnumMap.get(value);
     }
 

@@ -199,6 +199,9 @@ public enum HeightSystem {
      * @return enum by integer.
      */
     public static HeightSystem fromValue(int value) {
+        if (value == 0 || value == 255) {
+            return UNDEFINED;
+        }
         return _intToEnumMap.get(value);
     }
 
