@@ -16,13 +16,10 @@
 
 package org.cleanlogic.sxf4j.utils;
 
+import com.vividsolutions.jts.geom.Geometry;
 import org.apache.commons.cli.*;
-import org.cleanlogic.sxf4j.exceptions.SXFWrongFormatException;
-import org.cleanlogic.sxf4j.format.SXFRecord;
-import org.cleanlogic.sxf4j.format.SXFRecordMetricText;
-import org.cleanlogic.sxf4j.format.SXFRecordSemantic;
-import org.cleanlogic.sxf4j.io.SXFReader;
-import org.cleanlogic.sxf4j.io.SXFReaderOptions;
+import org.cleanlogic.sxf4j.SXFReader;
+import org.cleanlogic.sxf4j.SXFRecord;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,16 +93,19 @@ public class SxfInfo {
                 Utils.search(file, files, ".sxf");
             }
 
-            SXFReaderOptions sxfReaderOptions = new SXFReaderOptions();
-            sxfReaderOptions.quite = commandLine.hasOption("quiet");
-            sxfReaderOptions.flipCoordinates = commandLine.hasOption('f');
-            if (commandLine.hasOption("srid")) {
-                String[] sridPair = commandLine.getOptionValue("srid").split(":");
-                if (sridPair.length == 2) {
-                    sxfReaderOptions.srcSRID = Integer.parseInt(sridPair[0]);
-                    sxfReaderOptions.dstSRID = Integer.parseInt(sridPair[1]);
-                }
-            }
+//            SXFReaderOptions sxfReaderOptions = new SXFReaderOptions();
+//            sxfReaderOptions.quite = commandLine.hasOption("quiet");
+//            sxfReaderOptions.flipCoordinates = commandLine.hasOption('f');
+//            if (commandLine.hasOption('s')) {
+//                String srid = commandLine.getOptionValue('s');
+//                String[] sridPair = srid.split(":");
+//                if (sridPair.length == 2) {
+//                    sxfReaderOptions.srcSRID = Integer.parseInt(sridPair[0]);
+//                    sxfReaderOptions.dstSRID = Integer.parseInt(sridPair[1]);
+//                } else if (sridPair.length == 1) {
+//                    sxfReaderOptions.dstSRID = Integer.parseInt(srid);
+//                }
+//            }
 
             StringList geometryTypes = new StringList();
             geometryTypes.add("WKT");
@@ -121,19 +121,15 @@ public class SxfInfo {
                 }
             }
 
-            SXFReader sxfReader = new SXFReader(sxfReaderOptions);
-
             for (File _file : files) {
-                if (!sxfReaderOptions.quite) {
-                    System.out.printf("Process file %s\n", _file.toString());
-                }
+//                if (!sxfReaderOptions.quite) {
+//                    System.out.printf("Process file %s\n", _file.toString());
+//                }
+                SXFReader sxfReader;
                 try {
-                    sxfReader.read(_file);
+                    sxfReader = new SXFReader(_file);
                 } catch (IOException ex) {
                     ex.printStackTrace();
-                    continue;
-                } catch (SXFWrongFormatException e) {
-                    e.printStackTrace();
                     continue;
                 }
                 if (commandLine.hasOption("passport")) {
@@ -143,7 +139,7 @@ public class SxfInfo {
                     sxfReader.getDescriptor().print();
                 }
                 if (commandLine.hasOption("count")) {
-                    System.out.printf("Total records: %d\n", sxfReader.getRecords().size());
+                    System.out.printf("Total records: %d\n", sxfReader.getCount());
                 }
                 String[] recordPair = null;
                 if (commandLine.hasOption("record")) {
@@ -164,8 +160,8 @@ public class SxfInfo {
                             return;
                         }
                         if (commandLine.hasOption("record")) {
-                            sxfRecord.getHeader().print();
-                            if (sxfRecord.getHeader().isText) {
+                            System.out.println(sxfRecord.toString());
+                            if (sxfRecord.isSemanticExists()) {
                                 printText(sxfRecord);
                             }
                             printSemantics(sxfRecord);
@@ -177,8 +173,8 @@ public class SxfInfo {
                         List<SXFRecord> sxfRecords = sxfReader.getRecordByExcode(value);
                         for (SXFRecord sxfRecord : sxfRecords) {
                             if (commandLine.hasOption("record")) {
-                                sxfRecord.getHeader().print();
-                                if (sxfRecord.getHeader().isText) {
+                                System.out.println(sxfRecord.toString());
+                                if (sxfRecord.isSemanticExists()) {
                                     printText(sxfRecord);
                                 }
                                 printSemantics(sxfRecord);
@@ -195,8 +191,8 @@ public class SxfInfo {
                             return;
                         }
                         if (commandLine.hasOption("record")) {
-                            sxfRecord.getHeader().print();
-                            if (sxfRecord.getHeader().isText) {
+                            System.out.println(sxfRecord.toString());
+                            if (sxfRecord.isSemanticExists()) {
                                 printText(sxfRecord);
                             }
                             printSemantics(sxfRecord);
@@ -219,33 +215,40 @@ public class SxfInfo {
     }
 
     private static void printGeometry(SXFRecord sxfRecord, String geometryType) {
-        if (geometryType.equalsIgnoreCase("WKT")) {
-            System.out.println(Utils.geometryAsWKT(sxfRecord.getMetric().getGeometry()));
-        } else if (geometryType.equalsIgnoreCase("EWKT")) {
-            System.out.println(Utils.geometryAsEWKT(sxfRecord.getMetric().getGeometry()));
-        } else if (geometryType.equalsIgnoreCase("WKB")) {
-            System.out.println(Utils.geometryAsWKB(sxfRecord.getMetric().getGeometry()));
-        }
+//        Geometry srcGeometry = sxfRecord.getMetric().getSrcGeometry();
+//        Geometry dstGeometry = sxfRecord.getMetric().getDstGeometry();
+//
+//        if (geometryType.equalsIgnoreCase("WKT")) {
+//            System.out.printf("Source: %s\n", Utils.geometryAsWKT(srcGeometry));
+//            if (dstGeometry != null) {
+//                System.out.printf("Target: %s\n", Utils.geometryAsWKT(dstGeometry));
+//            }
+//        } else if (geometryType.equalsIgnoreCase("EWKT")) {
+//            System.out.printf("Source: %s\n", Utils.geometryAsEWKT(srcGeometry));
+//            if (dstGeometry != null) {
+//                System.out.printf("Target: %s\n", Utils.geometryAsEWKT(dstGeometry));
+//            }
+//        } else if (geometryType.equalsIgnoreCase("WKB")) {
+//            System.out.printf("Source: %s\n", Utils.geometryAsWKB(srcGeometry));
+//            if (dstGeometry != null) {
+//                System.out.printf("Target: %s\n", Utils.geometryAsWKB(dstGeometry));
+//            }
+//        }
     }
 
     private static void printSemantics(SXFRecord sxfRecord) {
         System.out.printf("RecordSemantics info:\n");
-        List<SXFRecordSemantic> sxfRecordSemantics = sxfRecord.getSemantics();
-        for (SXFRecordSemantic sxfRecordSemantic : sxfRecordSemantics) {
-            System.out.printf("\t");
-            sxfRecordSemantic.print();
+        for (SXFRecord.Semantic semantic : sxfRecord.semantics()) {
+
         }
+//        List<SXFRecordSemantic> sxfRecordSemantics = sxfRecord.getSemantics();
+//        for (SXFRecordSemantic sxfRecordSemantic : sxfRecordSemantics) {
+//            System.out.printf("\t");
+//            sxfRecordSemantic.print();
+//        }
     }
 
     private static void printText(SXFRecord sxfRecord) {
-        System.out.printf("Text:\t{");
-        for (int i = 0; i < sxfRecord.getMetric().metricTexts.size(); i++) {
-            SXFRecordMetricText sxfRecordMetricText = sxfRecord.getMetric().metricTexts.get(i);
-            if (i != 0) {
-                System.out.printf(",");
-            }
-            System.out.printf("%s", sxfRecordMetricText.toString());
-        }
-        System.out.println("}");
+//®
     }
 }

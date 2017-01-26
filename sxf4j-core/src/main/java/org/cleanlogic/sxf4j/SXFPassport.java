@@ -422,9 +422,11 @@ public class SXFPassport {
     }
 
     public int srid() {
+        // In some files srid sets to 65537
         if (srid == 65537) {
             srid = 0;
         }
+
         if (srid == 0) {
             if (mapType == MapType.LATLONG && ellipsoidKind == EllipsoidKind.WGS_84 &&
                     coordinateSystem == CoordinateSystem.GEOCOORDINATE &&  planeUnit == Unit.METRE &&

@@ -16,14 +16,14 @@
 
 package org.cleanlogic.sxf4j.utils;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
 import org.apache.commons.cli.*;
+import org.cleanlogic.sxf4j.SXFPassport;
+import org.cleanlogic.sxf4j.SXFReader;
+import org.cleanlogic.sxf4j.SXFRecord;
 import org.cleanlogic.sxf4j.enums.Local;
-import org.cleanlogic.sxf4j.format.SXFPassport;
-import org.cleanlogic.sxf4j.format.SXFRecord;
-import org.cleanlogic.sxf4j.format.SXFRecordHeader;
-import org.cleanlogic.sxf4j.format.SXFRecordSemantic;
-import org.cleanlogic.sxf4j.io.SXFReader;
-import org.cleanlogic.sxf4j.io.SXFReaderOptions;
+import org.osgeo.proj4j.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +56,7 @@ public class Sxf2Pgsql {
         boolean pgdumpFormat = false;
     }
     private static Sxf2PgsqlOptions sxf2PgsqlOptions = new Sxf2PgsqlOptions();
+    private static CoordinateTransform coordinateTransform;
 
     public static void main(String... args) {
         Options options = new Options();
@@ -167,13 +168,12 @@ public class Sxf2Pgsql {
                 useNomenclature = false;
             }
 
-            SXFReaderOptions sxfReaderOptions = new SXFReaderOptions();
-            sxfReaderOptions.flipCoordinates = true;
-            if (!commandLine.hasOption("t")) {
-                sxfReaderOptions.srcSRID = sxf2PgsqlOptions.srcSRID;
-                sxfReaderOptions.dstSRID = sxf2PgsqlOptions.dstSRID;
-            }
-            SXFReader sxfReader = new SXFReader(sxfReaderOptions);
+//            SXFReaderOptions sxfReaderOptions = new SXFReaderOptions();
+//            sxfReaderOptions.flipCoordinates = true;
+//            if (!commandLine.hasOption("t")) {
+//                sxfReaderOptions.srcSRID = sxf2PgsqlOptions.srcSRID;
+//                sxfReaderOptions.dstSRID = sxf2PgsqlOptions.dstSRID;
+//            }
 
             // Begin document
             System.out.println("SET CLIENT_ENCODING TO UTF8;");
@@ -192,29 +192,34 @@ public class Sxf2Pgsql {
 
             for (File file : files) {
                 try {
-                    sxfReader.read(file);
+                    SXFReader sxfReader = new SXFReader(file);
                     SXFPassport sxfPassport = sxfReader.getPassport();
+                    int srid = sxfPassport.srid();
+                    if (srid != 0) {
+                        sxf2PgsqlOptions.srcSRID = srid;
+                    }
+                    if (!commandLine.hasOption("t")) {
+                        if (sxf2PgsqlOptions.srcSRID != sxf2PgsqlOptions.dstSRID) {
+                            coordinateTransform = createCoordinateTransform();
+                        }
+                    }
                     // Each file in separate transaction
                     if (useNomenclature) {
-                        sxf2PgsqlOptions.tableName = sxfPassport.nomenclature;
+                        sxf2PgsqlOptions.tableName = sxfPassport.getNomenclature();
                         if (sxf2PgsqlOptions.dropTable) {
                             System.out.print(dropTables());
                         }
                         if (sxf2PgsqlOptions.transaction) {
                             System.out.println("BEGIN;");
                         }
-                        int srid = Utils.detectSRID(sxfPassport);
-                        if (srid != 0) {
-                            sxf2PgsqlOptions.srcSRID = srid;
-                        }
                         System.out.print(createTables());
                     }
                     if (!sxf2PgsqlOptions.pgdumpFormat) {
-                        for (SXFRecord sxfRecord : sxfReader.getRecords()) {
-                            System.out.print(createInsert(sxfRecord));
+                        for (int i = 0; i < sxfReader.getCount(); i++) {
+                            System.out.print(createInsert(sxfReader.getRecordByIncode(i)));
                         }
                     } else {
-                        createCopy(sxfReader.getRecords());
+                        createCopy(sxfReader);
                     }
                     if (useNomenclature) {
                         if (sxf2PgsqlOptions.spatialIndex) {
@@ -224,8 +229,11 @@ public class Sxf2Pgsql {
                         }
                         System.out.println("END;");
                     }
+                    coordinateTransform = null;
                 } catch (IOException e) {
                     e.printStackTrace();
+                } finally {
+                    coordinateTransform = null;
                 }
             }
             if (!useNomenclature) {
@@ -286,11 +294,12 @@ public class Sxf2Pgsql {
         return stringBuilder.toString();
     }
 
-    private static void createCopy(List<SXFRecord> sxfRecords) {
+    private static void createCopy(SXFReader sxfReader) throws IOException {
         // Prepare copy by locals
         Map<Local, List<SXFRecord>> preparedSXFRecords = new HashMap<>();
-        for (SXFRecord sxfRecord : sxfRecords) {
-            Local local = sxfRecord.getHeader().local;
+        for (int i = 0; i < sxfReader.getCount(); i++) {
+            SXFRecord sxfRecord = sxfReader.getRecordByIncode(i);
+            Local local = sxfRecord.getLocal();
             if (!preparedSXFRecords.containsKey(local)) {
                 preparedSXFRecords.put(local, new ArrayList<SXFRecord>());
             }
@@ -315,33 +324,41 @@ public class Sxf2Pgsql {
         }
     }
 
-    private static String createCopy(SXFRecord sxfRecord) {
+    private static String createCopy(SXFRecord sxfRecord) throws IOException {
+        Geometry geometry = sxfRecord.geometry();
+        if (coordinateTransform != null) {
+            geometry = geometryTransform(geometry);
+        }
         return String.format("%d\t%d\t%s\t%s\t%s\n",
-                sxfRecord.getHeader().excode,
-                sxfRecord.getHeader().number,
+                sxfRecord.getExcode(),
+                sxfRecord.getNumber(),
                 "text",
-                semanticsToPgArray(sxfRecord.getSemantics(), true),
-                Utils.geometryAsWKB(sxfRecord.getMetric().getGeometry()));
+                semanticsToPgArray(sxfRecord.semantics(), true),
+                Utils.geometryAsWKB(geometry));
     }
 
-    private static String createInsert(SXFRecord sxfRecord) {
+    private static String createInsert(SXFRecord sxfRecord) throws IOException {
+        Geometry geometry = sxfRecord.geometry();
+        if (coordinateTransform != null) {
+            geometry = geometryTransform(geometry);
+        }
+
         StringBuilder stringBuilder = new StringBuilder();
 
         String schemaName = sxf2PgsqlOptions.schemaName;
-        SXFRecordHeader sxfRecordHeader = sxfRecord.getHeader();
-        String tableName = String.format("%s_%s", sxf2PgsqlOptions.tableName, sxfRecordHeader.local);
+        String tableName = String.format("%s_%s", sxf2PgsqlOptions.tableName, sxfRecord.getLocal());
         stringBuilder.append(String.format("INSERT INTO \"%s\".\"%s\" ", schemaName, tableName));
         stringBuilder.append(String.format("(\"excode\", \"number\", \"text\", \"semantics\", %s) ", sxf2PgsqlOptions.geocolumnName));
         stringBuilder.append("VALUES ");
         stringBuilder.append("(");
-        stringBuilder.append(String.format("'%d',", sxfRecordHeader.excode));
-        stringBuilder.append(String.format("'%d',", sxfRecordHeader.number));
+        stringBuilder.append(String.format("'%d',", sxfRecord.getExcode()));
+        stringBuilder.append(String.format("'%d',", sxfRecord.getNumber()));
         stringBuilder.append(String.format("'%s',", "text"));
-        stringBuilder.append(String.format("'%s'::varchar[],", semanticsToPgArray(sxfRecord.getSemantics())));
+        stringBuilder.append(String.format("'%s'::varchar[],", semanticsToPgArray(sxfRecord.semantics())));
         if (sxf2PgsqlOptions.stTransform) {
-            stringBuilder.append(String.format("ST_Transform('%s'::geometry, %d)", Utils.geometryAsWKB(sxfRecord.getMetric().getGeometry()), sxf2PgsqlOptions.dstSRID));
+            stringBuilder.append(String.format("ST_Transform('%s'::geometry, %d)", Utils.geometryAsWKB(geometry), sxf2PgsqlOptions.dstSRID));
         } else {
-            stringBuilder.append(String.format("'%s'", Utils.geometryAsWKB(sxfRecord.getMetric().getGeometry())));
+            stringBuilder.append(String.format("'%s'", Utils.geometryAsWKB(geometry)));
         }
         stringBuilder.append(");\n");
         sxfRecord.destroy();
@@ -373,36 +390,73 @@ public class Sxf2Pgsql {
         return geometryType;
     }
 
-    private static String semanticsToPgArray(List<SXFRecordSemantic> sxfRecordSemantics) {
-        return semanticsToPgArray(sxfRecordSemantics, false);
+    private static Geometry geometryTransform(Geometry srcGeometry) {
+        Geometry geometry = (Geometry) srcGeometry.clone();
+        ProjCoordinate srcCoordinate = new ProjCoordinate();
+        ProjCoordinate dstCoordinate = new ProjCoordinate();
+        for (Coordinate coordinate : geometry.getCoordinates()) {
+            srcCoordinate.setValue(coordinate.x, coordinate.y, coordinate.z);
+            coordinateTransform.transform(srcCoordinate, dstCoordinate);
+            coordinate.setOrdinate(0, dstCoordinate.x);
+            coordinate.setOrdinate(1, dstCoordinate.y);
+            coordinate.setOrdinate(2, dstCoordinate.z);
+        }
+        geometry.setSRID(sxf2PgsqlOptions.dstSRID);
+        return geometry;
     }
 
-    private static String semanticsToPgArray(List<SXFRecordSemantic> sxfRecordSemantics, boolean copy) {
+    private static String semanticsToPgArray(List<SXFRecord.Semantic> semantics) {
+        return semanticsToPgArray(semantics, false);
+    }
+
+    private static String semanticsToPgArray(List<SXFRecord.Semantic> semantics, boolean copy) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("{");
-        for (int i = 0; i < sxfRecordSemantics.size(); i++) {
-            SXFRecordSemantic sxfRecordSemantic = sxfRecordSemantics.get(i);
+        for (int i = 0; i < semantics.size(); i++) {
+            SXFRecord.Semantic semantic = semantics.get(i);
             if (i != 0) {
                 stringBuilder.append(",");
             }
 
             if (!copy) {
-                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\\", "\\\\\\");
-                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\n", "\\\\n");
-                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\r", "\\\\r");
-                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\t", "\\\\t");
-                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\"", "\\\"");
-                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("'", "''");
+                semantic.value = semantic.value.replace("\\", "\\\\\\");
+                semantic.value = semantic.value.replace("\n", "\\\\n");
+                semantic.value = semantic.value.replace("\r", "\\\\r");
+                semantic.value = semantic.value.replace("\t", "\\\\t");
+                semantic.value = semantic.value.replace("\"", "\\\"");
+                semantic.value = semantic.value.replace("'", "''");
             } else {
-                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\\", "\\\\\\\\");
-                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\n", "\\\\\\n");
-                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\r", "\\\\\\r");
-                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\t", "\\\\\\t");
-                sxfRecordSemantic.value = sxfRecordSemantic.value.replace("\"", "\\\\\"");
+                semantic.value = semantic.value.replace("\\", "\\\\\\\\");
+                semantic.value = semantic.value.replace("\n", "\\\\\\n");
+                semantic.value = semantic.value.replace("\r", "\\\\\\r");
+                semantic.value = semantic.value.replace("\t", "\\\\\\t");
+                semantic.value = semantic.value.replace("\"", "\\\\\"");
             }
-            stringBuilder.append(String.format("{\"%s\",\"%s\"}", sxfRecordSemantic.code, sxfRecordSemantic.value));
+            stringBuilder.append(String.format("{\"%s\",\"%s\"}", semantic.code, semantic.value));
         }
         stringBuilder.append("}");
         return stringBuilder.toString();
+    }
+
+    private static CoordinateTransform createCoordinateTransform() {
+        CoordinateTransformFactory coordinateTransformFactory = new CoordinateTransformFactory();
+        CRSFactory crsFactory = new CRSFactory();
+
+        CoordinateReferenceSystem srcCRS;
+        CoordinateReferenceSystem dstCRS;
+
+        if (Utils.SRID_EX.containsKey(sxf2PgsqlOptions.srcSRID)) {
+            srcCRS = crsFactory.createFromParameters("EPSG:" + sxf2PgsqlOptions.srcSRID, Utils.SRID_EX.get(sxf2PgsqlOptions.srcSRID));
+        } else {
+            srcCRS = crsFactory.createFromName("EPSG:" + sxf2PgsqlOptions.srcSRID);
+        }
+
+        if (Utils.SRID_EX.containsKey(sxf2PgsqlOptions.dstSRID)) {
+            dstCRS = crsFactory.createFromParameters("EPSG:" + sxf2PgsqlOptions.dstSRID, Utils.SRID_EX.get(sxf2PgsqlOptions.dstSRID));
+        } else {
+            dstCRS = crsFactory.createFromName("EPSG:" + sxf2PgsqlOptions.dstSRID);
+        }
+
+        return coordinateTransformFactory.createTransform(srcCRS, dstCRS);
     }
 }
