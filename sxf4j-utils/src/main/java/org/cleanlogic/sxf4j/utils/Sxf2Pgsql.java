@@ -332,7 +332,7 @@ public class Sxf2Pgsql {
         return String.format("%d\t%d\t%s\t%s\t%s\n",
                 sxfRecord.getExcode(),
                 sxfRecord.getNumber(),
-                "text",
+                textsToString(sxfRecord.texts(), true),
                 semanticsToPgArray(sxfRecord.semantics(), true),
                 Utils.geometryAsWKB(geometry));
     }
@@ -353,7 +353,7 @@ public class Sxf2Pgsql {
         stringBuilder.append("(");
         stringBuilder.append(String.format("'%d',", sxfRecord.getExcode()));
         stringBuilder.append(String.format("'%d',", sxfRecord.getNumber()));
-        stringBuilder.append(String.format("'%s',", "text"));
+        stringBuilder.append(String.format("'%s',", textsToString(sxfRecord.texts())));
         stringBuilder.append(String.format("'%s'::varchar[],", semanticsToPgArray(sxfRecord.semantics())));
         if (sxf2PgsqlOptions.stTransform) {
             stringBuilder.append(String.format("ST_Transform('%s'::geometry, %d)", Utils.geometryAsWKB(geometry), sxf2PgsqlOptions.dstSRID));
@@ -417,6 +417,32 @@ public class Sxf2Pgsql {
         }
         geometry.setSRID(sxf2PgsqlOptions.dstSRID);
         return geometry;
+    }
+
+    private static String textsToString(List<SXFRecord.Text> texts) {
+        return textsToString(texts, false);
+    }
+    private static String textsToString(List<SXFRecord.Text> texts, boolean copy) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (SXFRecord.Text text : texts) {
+            String value = text.getText();
+            if (!copy) {
+                value = value.replace("\\", "\\\\\\");
+                value = value.replace("\n", "\\\\n");
+                value = value.replace("\r", "\\\\r");
+                value = value.replace("\t", "\\\\t");
+                value = value.replace("\"", "\\\"");
+                value = value.replace("'", "''");
+            } else {
+                value = value.replace("\\", "\\\\\\\\");
+                value = value.replace("\n", "\\\\\\n");
+                value = value.replace("\r", "\\\\\\r");
+                value = value.replace("\t", "\\\\\\t");
+                value = value.replace("\"", "\\\\\"");
+            }
+            stringBuilder.append(value);
+        }
+        return stringBuilder.toString();
     }
 
     private static String semanticsToPgArray(List<SXFRecord.Semantic> semantics) {
