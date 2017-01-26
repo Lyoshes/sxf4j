@@ -562,7 +562,7 @@ public class SXFRecord {
         while (totalBytes > 0) {
             Semantic semantic = new Semantic();
 
-            short code = buffer.getShort();
+            semantic.code = buffer.getShort();
             byte[] lengthCode = new byte[2];
             buffer.get(lengthCode);
             int type = lengthCode[0] & 0xFF;
