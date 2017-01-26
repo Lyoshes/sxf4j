@@ -19,12 +19,14 @@ Dependes:
  ```
  Using sxf4j as library:
  ```
- SXFReaderOptions sxfReaderOptions = new SXFReaderOptions();
- sxfReaderOptions.flipCoordinates = true;
- SXFReader sxfReader = new SXFReader(sxfReaderOptions);
- SXFRecord borderRecord = sxfReader.getRecordByExcode(_sxfPassport.borderExcode).get(0);
- borderRecord.getHeader().print();
- System.out.println(SXFRecordMetric.geometryAsWKT(borderRecord.getMetric().geometry, true));
+ int number = 3695;
+ File file = new File("src/test/resources/K37007.SXF");
+ SXFReader sxfReader = new SXFReader(file);
+ SXFRecord sxfRecord = sxfReader.getRecordByNumber(number);
+ // Native coordinates in map projection
+ Geometry geometry = sxfRecord.geometry();
+ 
+ sxfReader.close();
 ```
  
  ## Command line tools
