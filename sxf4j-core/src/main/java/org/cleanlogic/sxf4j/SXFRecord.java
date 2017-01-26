@@ -179,15 +179,32 @@ public class SXFRecord {
      */
     private int semanticOffset;
 
+    /**
+     * Current buffer from which readed record header. Need for read geometry by request.
+     */
     private ByteBuffer buffer;
 
+    /**
+     * Record geometry, in metres, in map projection.
+     */
     private Geometry geometry;
+    /**
+     * List of text signatures.
+     */
     private List<Text> texts = new ArrayList<>();
+    /**
+     * List of semantics
+     */
     private List<Semantic> semantics = new ArrayList<>();
 
     private final SXFPassport sxfPassport;
     private final GeometryFactory geometryFactory;
 
+    /**
+     * Metric text class. This object contains text and them aligment in metric type.
+     * To convert into windows constans see {@link TextMetricAlign#getTextHorizontalAlign()}
+     * and {@link TextMetricAlign#getTextVericalAlign()}.
+     */
     public final class Text {
         private String text;
         private TextMetricAlign align;
@@ -211,10 +228,29 @@ public class SXFRecord {
         }
     }
 
+    /**
+     * Record semantic class.
+     * Contains two main parameters:
+     * 1. code - code of semantic.
+     * 2. value - value of semantic.
+     * Other parameters is service, and maybe hidden in feature.
+     */
     public final class Semantic {
+        /**
+         * Code of semantic.
+         */
         public short code;
+        /**
+         * Type of semantic.
+         */
         public SemanticType type;
+        /**
+         * Scale of semantic. See official documentation.
+         */
         public int scale;
+        /**
+         * Decrypted value of semantic.
+         */
         public String value;
 
         @Override
@@ -227,35 +263,71 @@ public class SXFRecord {
         }
     }
 
+    /**
+     * Default constructor of SXFRecord.
+     * @param sxfPassport passport of SXF file from which read record.
+     * @param geometryFactory create geometry factory.
+     */
     public SXFRecord(SXFPassport sxfPassport, GeometryFactory geometryFactory) {
         this.sxfPassport = sxfPassport;
         this.geometryFactory = geometryFactory;
     }
 
+    /**
+     * excode of record, its main code from RSC classificator.
+     * @return excode of record.
+     */
     public int getExcode() {
         return excode;
     }
 
+    /**
+     * Unique record number in sheet (not incode!).
+     * @return number of record.
+     */
     public int getNumber() {
         return number;
     }
 
+    /**
+     * Record localization.
+     * @return local
+     */
     public Local getLocal() {
         return local;
     }
 
+    /**
+     * Number of subrecords.
+     * @return number of subrecords in record
+     */
     public int getSubrecordCount() {
         return subrecordCount;
     }
 
+    /**
+     * Contains record semantics or not
+     * @return true if record contains semantic, otherwise false.
+     */
     public boolean isSemanticExists() {
         return isSemantic;
     }
 
+    /**
+     * Contains metric text or not. For {@link Local#TITLE} and {@link Local#MIXED}.
+     * @return true if metric contains text, otherwise false.
+     */
     public boolean isTextExsits() {
         return isText;
     }
 
+    /**
+     * True if {@link Local#SQUARE} is MultiPolygon(by documentation).
+     * By default, we mean what all geometry is Multi, but if this flag sets for {@link Local#SQUARE} all holes is shells.
+     * But need do some checks for this flag.
+     * See {@link #createMultiPolygon(double[][], double[][][])} source for comments.
+     * @return true if {@link Local#SQUARE} is multipolygon(but not enough), otherwise false.
+     */
     public boolean isMultiPolygon() {
         return isMultiPolygon;
     }
@@ -277,7 +349,7 @@ public class SXFRecord {
     }
 
     /**
-     * Function read only record header information.
+     * Function read only record header information. Geometry, Text, and Semantics read by request.
      * @param buffer Opened buffer SXF file
      * @param strict Show message through println or IOException.
      * @throws IOException exception if wrong.
@@ -299,7 +371,7 @@ public class SXFRecord {
     }
 
     /**
-     * Function read only record header information.
+     * Function read only record header information. Geometry, Text, and Semantics read by request.
      * @param buffer Opened buffer SXF file
      * @param strict Show message through println or IOException.
      * @throws IOException exception if wrong.
@@ -341,7 +413,7 @@ public class SXFRecord {
     }
 
     /**
-     * Function read only record header information.
+     * Function read only record header information. Geometry, Text, and Semantics read by request.
      * @param buffer Opened buffer SXF file
      * @param strict Show message through println or IOException.
      * @throws IOException exception if wrong.
@@ -390,6 +462,12 @@ public class SXFRecord {
         semanticOffset = metricOffset + metricLength;
     }
 
+    /**
+     * Return metric element size enum from flags (metricElementSize and isFloat).
+     * @param metricElementSize metric element size.
+     * @param isFloat flag in which integers contains metric.
+     * @return enum of metric element size.
+     */
     private MetricElementSize getMetricElementSizeEnum(int metricElementSize, boolean isFloat) {
         MetricElementSize metricElementSizeEnum = null;
         switch (metricElementSize) {
@@ -412,6 +490,17 @@ public class SXFRecord {
         return metricElementSizeEnum;
     }
 
+    /**
+     * Get or read and return metric of record. Geometry builds by geometry factory and set sheet srid if they detected or 0.
+     * Some things not supported (Graphic, 3D)
+     * Supported:
+     *  - Metric
+     *  - Metric Text
+     *  - Semantics
+     *    - Extended semantic
+     * @return geometry of record.
+     * @throws IOException exception if wrong.
+     */
     public Geometry geometry() throws IOException {
         if (geometry != null) {
             return geometry;
@@ -467,6 +556,12 @@ public class SXFRecord {
         return geometry;
     }
 
+    /**
+     * Get texts of record. Worked only if geometry will be read earlier.
+     * One item in texts implements one geometry from record geometry.
+     * @return list of text.
+     * @throws IOException exception if wrong.
+     */
     public List<Text> texts() throws IOException {
         if (isText && geometry == null) {
             geometry();
@@ -474,6 +569,10 @@ public class SXFRecord {
         return texts;
     }
 
+    /**
+     * Read coordinate from record. Returns array which contains xyz.
+     * @return array with xyz
+     */
     private double[] readCoordinate() {
         double x = 0.;
         double y = 0.;
@@ -518,6 +617,11 @@ public class SXFRecord {
         return new double[] {y, x, z};
     }
 
+    /**
+     * Read record text from file
+     * @return Text object
+     * @throws IOException exception if wrong.
+     */
     private Text readText() throws IOException {
         int length = buffer.get() & 0xFF;
         byte[] string = new byte[length];
@@ -550,6 +654,10 @@ public class SXFRecord {
         return new Text(text, align);
     }
 
+    /**
+     * Get list of semantics. Function read semantics if they will be not read earlier.
+     * @return list of semantics.
+     */
     public List<Semantic> semantics() {
         if (isSemantic && semantics.size() > 0) {
             return semantics;
@@ -661,6 +769,12 @@ public class SXFRecord {
         return semantics;
     }
 
+    /**
+     * Create {@link MultiLineString}.
+     * @param coordinates main record coordinates.
+     * @param subCoordinates sub record coordinates.
+     * @return {@link MultiLineString} geometry.
+     */
     private Geometry createMultiLineString(double[][] coordinates, double[][][] subCoordinates) {
         boolean clonePoint;
         int length = coordinates.length;
@@ -710,6 +824,12 @@ public class SXFRecord {
         return geometryFactory.createMultiLineString(lines);
     }
 
+    /**
+     * Create {@link MultiPolygon}.
+     * @param coordinates main record coordinates.
+     * @param subCoordinates sub record coordinates.
+     * @return {@link MultiPolygon} geometry.
+     */
     private Geometry createMultiPolygon(double[][] coordinates, double[][][] subCoordinates) {
         CoordinateSequence coordinateSequence = geometryFactory.getCoordinateSequenceFactory().create(coordinates.length, 3);
         for (int i = 0; i < coordinates.length; i++) {
@@ -756,6 +876,12 @@ public class SXFRecord {
         return geometryFactory.createMultiPolygon(polygons);
     }
 
+    /**
+     * Create {@link MultiPoint}.
+     * @param coordinates main record coordinates.
+     * @param subCoordinates sub record coordinates.
+     * @return {@link MultiPoint} geometry.
+     */
     private Geometry createMultiPoint(double[][] coordinates, double[][][] subCoordinates) {
         Point[] points = new Point[1 + subCoordinates.length];
         CoordinateSequence coordinateSequence = geometryFactory.getCoordinateSequenceFactory().create(1, 3);
@@ -825,6 +951,9 @@ public class SXFRecord {
         return stringBuilder.toString();
     }
 
+    /**
+     * Destroy geometry, texts, semantics
+     */
     public void destroy() {
         geometry = null;
         texts.clear();

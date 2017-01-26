@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
+ * Header(Passport) of SXF file format. Contains special data for read/write records, coordinate transformation and etc.
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 public class SXFPassport {
@@ -285,6 +286,13 @@ public class SXFPassport {
     private boolean isReadOnly;
 
     /**
+     * Constructor of SXF file passport.
+     */
+    public SXFPassport() {
+        //
+    }
+
+    /**
      * Function check SXF magic number.
      * @param strict Show message through println or IOException.
      * @throws IOException exception if wrong.
@@ -360,21 +368,33 @@ public class SXFPassport {
     }
 
     /**
-     * Get length of SXFPassport.
+     * Get length of 
      * @return length of passport (must be 256 or 400).
      */
     public int getLength() {
         return length;
     }
 
+    /**
+     * Excode for border frame record (in the main is 91000000).
+     * @return excode of border frame.
+     */
     public int getBorderExcode() {
         return borderExcode;
     }
 
+    /**
+     * Detect in which format stored metric of record.
+     * @return true if metric in descrets, false - if metric in real coordinates.
+     */
     public boolean isDescrets() {
         return ((projectionFlag == Projection.ADEQUACY) && realPlaceFlag == 0);
     }
 
+    /**
+     * Get passport sheet corners coordinates in metres.
+     * @return sheet corners coordinates.
+     */
     public double[][] getXY() {
         return new double[][] {
                 new double[] {xSouthWest, ySouthWest},
@@ -383,6 +403,10 @@ public class SXFPassport {
                 new double[] {xSouthEast, ySouthEast}};
     }
 
+    /**
+     * Get passport sheet corners coordinates in degrees.
+     * @return sheet corners coordinates.
+     */
     public double[][] getBL() {
         return new double[][] {
                 new double[] {bSouthWest, lSouthWest},
@@ -391,6 +415,10 @@ public class SXFPassport {
                 new double[] {bSouthEast, lSouthEast}};
     }
 
+    /**
+     * Get passport sheet corners coordinates in descrets (device coordinate system).
+     * @return sheet corners coordinates.
+     */
     public double[][] getDeviceXY() {
         return new double[][] {
                 new double[] {xBorderDeviceSouthWest, yBorderDeviceSouthWest},
@@ -399,28 +427,53 @@ public class SXFPassport {
                 new double[] {xBorderDeviceSouthEast, yBorderDeviceSouthEast}};
     }
 
+    /**
+     * Device capability (meters on pixel)
+     * @return dpi
+     */
     public int getDeviceCapability() {
         return deviceCapability;
     }
 
+    /**
+     * Scale of sheet.
+     * @return scale.
+     */
     public int getScale() {
         return scale;
     }
 
+    /**
+     * Offset of beginning coordinate system relative southwest corner of sheet.
+     * @return offset of beggining coordinate system.
+     */
     public double[] getDXY0() {
         return new double[] {dx0, dy0};
     }
 
+    /**
+     * Sets Offset of beginning coordinate system relative southwest corner of sheet.
+     * @param dxy0 offset start coordinate system.
+     */
     public void setDXY0(double[] dxy0) {
         dx0 = dxy0[0];
         dy0 = dxy0[1];
     }
+
+    /**
+     * Set projection flag, in version 4 they contains into {@link SXFDescriptor}.
+     * @param projectionFlag projection data flag.
+     */
     public void setProjectionFlag(Projection projectionFlag) {
         if (version == VERSION_4) {
             this.projectionFlag = projectionFlag;
         }
     }
 
+    /**
+     * Returns or detect from passport params SRID.
+     * @return srid of sheet.
+     */
     public int srid() {
         // In some files srid sets to 65537
         if (srid == 65537) {
@@ -449,127 +502,22 @@ public class SXFPassport {
         return srid;
     }
 
+    /**
+     * Zone number for SK4.
+     * @return zone number.
+     */
     public int getZone() {
         double y = Math.max(yNorthWest, ySouthWest);
         int zone = (int) (y / 1000000.);
         return zone;
     }
 
+    /**
+     * Sheet nomenclature.
+     * @return nomenclature.
+     */
     public String getNomenclature() {
         return nomenclature;
-    }
-
-    public void print() {
-        print(this);
-    }
-
-    public static void print(SXFPassport sxfPassport) {
-        System.out.printf("Passport Info\n");
-        System.out.printf("\tIdentifier:\t\t0x%08x\n", sxfPassport.identifier);
-        System.out.printf("\tLength:\t\t\t%d\n",sxfPassport.length);
-        System.out.printf("\tVersion:\t\t0x%08x\n", sxfPassport.version);
-        System.out.printf("\tCheckSum:\t\t%d\n", sxfPassport.checkSum);
-        System.out.printf("\tCreateDate:\t\t%s\n", sxfPassport.createDate);
-        System.out.printf("\tNomenclature:\t\t%s\n", sxfPassport.nomenclature);
-        System.out.printf("\tScale:\t\t\t%d\n", sxfPassport.scale);
-        System.out.printf("\tName:\t\t\t%s\n", sxfPassport.name);
-        System.out.printf("\tInfoFlags:\n");
-        System.out.printf("\t\tConditionFlag:\t\t%d\n", sxfPassport.conditionFlag);
-        if (sxfPassport.version == VERSION_3) {
-            System.out.printf("\t\tProjection flag:\t%s (%s)\n", sxfPassport.projectionFlag, sxfPassport.projectionFlag.getName());
-        } else {
-            System.out.printf("\t\tAuto GUID:\t\t%b\n", sxfPassport.autoGUID);
-        }
-        System.out.printf("\t\tRealCoordinatesFlag:\t%d\n", sxfPassport.realPlaceFlag);
-        System.out.printf("\t\tCodeTypeFlag:\t\t%d\n", sxfPassport.codeTypeFlag);
-        System.out.printf("\t\tGeneralizationFlag:\t%d\n", sxfPassport.generalizationFlag);
-        System.out.printf("\t\tTextEncodingFlag:\t%s (%s)\n", sxfPassport.textEncodingFlag, sxfPassport.textEncodingFlag.getName());
-        if (sxfPassport.version == VERSION_4) {
-            System.out.printf("\t\tCoordPrecisionFlag:\t%s (%s)\n", sxfPassport.coordinatePrecisionFlag, sxfPassport.coordinatePrecisionFlag.getName());
-        }
-        System.out.printf("\t\tSpecialSortFlag:\t%d\n", sxfPassport.orderViewSheetFlag);
-        if (sxfPassport.version == VERSION_3) {
-            System.out.printf("\tClassificator code:\t%d\n", sxfPassport.code);
-        } else {
-            System.out.printf("\tEPSG:\t\t\t%d\n", sxfPassport.srid);
-        }
-        System.out.printf("\tThe geometry coordinates of sheet corners:\n");
-        System.out.printf("\t\tX South West:\t%f\n", sxfPassport.xSouthWest);
-        System.out.printf("\t\tY South West:\t%f\n", sxfPassport.ySouthWest);
-        System.out.printf("\t\tX North West:\t%f\n", sxfPassport.xNorthWest);
-        System.out.printf("\t\tY North West:\t%f\n", sxfPassport.yNorthWest);
-        System.out.printf("\t\tX North East:\t%f\n", sxfPassport.xNorthEast);
-        System.out.printf("\t\tY North East:\t%f\n", sxfPassport.yNorthEast);
-        System.out.printf("\t\tX South East:\t%f\n", sxfPassport.xSouthEast);
-        System.out.printf("\t\tY South East:\t%f\n", sxfPassport.ySouthEast);
-        System.out.printf("\t\tGeometry:\n");
-//        System.out.printf("\t\t\tWKB: %s\n", Utils.geometryAsWKB(sxfPassport.getNativeGeometry()));
-//        System.out.printf("\t\t\tWKT: %s\n", Utils.geometryAsWKT(sxfPassport.getNativeGeometry()));
-        System.out.printf("\tThe geographic coordinates of sheet corners:\n");
-        System.out.printf("\t\tB South West:\t%f\n", sxfPassport.bSouthWest);
-        System.out.printf("\t\tL South West:\t%f\n", sxfPassport.lSouthWest);
-        System.out.printf("\t\tB North West:\t%f\n", sxfPassport.bNorthWest);
-        System.out.printf("\t\tL North West:\t%f\n", sxfPassport.lNorthWest);
-        System.out.printf("\t\tB North East:\t%f\n", sxfPassport.bNorthEast);
-        System.out.printf("\t\tL North East:\t%f\n", sxfPassport.lNorthEast);
-        System.out.printf("\t\tB South East:\t%f\n", sxfPassport.bSouthEast);
-        System.out.printf("\t\tL South East:\t%f\n", sxfPassport.lSouthEast);
-        System.out.printf("\t\tGeography:\n");
-//        System.out.printf("\t\t\tWKB: %s\n", Utils.geometryAsWKB(sxfPassport.getNativeGeography()));
-//        System.out.printf("\t\t\tWKT: %s\n", Utils.geometryAsWKT(sxfPassport.getNativeGeography()));
-        System.out.printf("\tThe mathematical basis of the sheet:\n");
-        System.out.printf("\t\tEllipsoid kind:\t\t%s (%s)\n", sxfPassport.ellipsoidKind, sxfPassport.ellipsoidKind.getName());
-        System.out.printf("\t\tHeight System:\t\t%s (%s)\n", sxfPassport.heightSystem, sxfPassport.heightSystem.getName());
-        System.out.printf("\t\tMaterial Projection:\t%s (%s)\n", sxfPassport.mapProjection, sxfPassport.mapProjection.getName());
-        System.out.printf("\t\tCoordinate System:\t%s (%s)\n", sxfPassport.coordinateSystem, sxfPassport.coordinateSystem.getName());
-        System.out.printf("\t\tPlane Unit:\t\t%s (%s)\n", sxfPassport.planeUnit, sxfPassport.planeUnit.getName());
-        System.out.printf("\t\tHeight Unit:\t\t%s (%s)\n", sxfPassport.heightUnit, sxfPassport.heightUnit.getName());
-        System.out.printf("\t\tFrame Kind:\t\t%s (%s)\n", sxfPassport.frameKind, sxfPassport.frameKind.getName());
-        System.out.printf("\t\tMap Type:\t\t%s (%s)\n", sxfPassport.mapType, sxfPassport.mapType.getName());
-        System.out.printf("\tReference data on the source material:\n");
-        System.out.printf("\t\tDate:\t\t\t%s\n", sxfPassport.date);
-        System.out.printf("\t\tMaterial Init Kind:\t%s (%s)\n", sxfPassport.materialKind, sxfPassport.materialKind.getName());
-        System.out.printf("\t\tMaterial Init Type:\t%s (%s)\n", sxfPassport.materialType, sxfPassport.materialType.getName());
-        if (sxfPassport.version == VERSION_4) {
-            System.out.printf("\t\tMSK-63 Ident:\t\t%d\n", sxfPassport.msk63Ident);
-            System.out.printf("\t\tFrame Border:\t\t%d\n", sxfPassport.frameBorder);
-        }
-        System.out.printf("\t\tMagnetic Angle:\t\t%f\n", sxfPassport.magneticAngle);
-        System.out.printf("\t\tYear Magnetic Angle:\t%f\n", sxfPassport.yearMagneticAngle);
-        System.out.printf("\t\tAngle Date:\t\t%s\n", sxfPassport.dateAngle);
-        if (sxfPassport.version == VERSION_4) {
-            System.out.printf("\t\tMSK-63 Zone:\t\t%d\n", sxfPassport.msk63Zone);
-        }
-        System.out.printf("\t\tRelief Height:\t\t%f\n", sxfPassport.reliefHeight);
-        if (sxfPassport.version == VERSION_4) {
-            System.out.printf("\tAxis Angle:\t\t%f\n", sxfPassport.axisAngle);
-        }
-        System.out.printf("\tDevice Capability:\t%d\n", sxfPassport.deviceCapability);
-        System.out.printf("\tLocation border on the device:\n");
-        System.out.printf("\t\tX Border Device South West:\t%d\n", sxfPassport.xBorderDeviceSouthWest);
-        System.out.printf("\t\tY Border Device South West:\t%d\n", sxfPassport.yBorderDeviceSouthWest);
-        System.out.printf("\t\tX Border Device North West:\t%d\n", sxfPassport.xBorderDeviceNorthWest);
-        System.out.printf("\t\tY Border Device North West:\t%d\n", sxfPassport.yBorderDeviceNorthWest);
-        System.out.printf("\t\tX Border Device North East:\t%d\n", sxfPassport.xBorderDeviceNorthEast);
-        System.out.printf("\t\tY Border Device North East:\t%d\n", sxfPassport.yBorderDeviceNorthEast);
-        System.out.printf("\t\tX Border Device South East:\t%d\n", sxfPassport.xBorderDeviceSouthEast);
-        System.out.printf("\t\tY Border Device South East:\t%d\n", sxfPassport.yBorderDeviceSouthEast);
-        System.out.printf("\t\tDevice:\n");
-//        System.out.printf("\t\t\tWKB: %s\n", Utils.geometryAsWKB(sxfPassport.getNativeDevice()));
-//        System.out.printf("\t\t\tWKT: %s\n", Utils.geometryAsWKT(sxfPassport.getNativeDevice()));
-        System.out.printf("\tBorder excode:\t%d\n", sxfPassport.borderExcode);
-        System.out.printf("\tSource material projection info:\n");
-        System.out.printf("\t\tFirst Main Parallel:\t%f\n", sxfPassport.firstMainParallel);
-        System.out.printf("\t\tSecond Main Parallel:\t%f\n", sxfPassport.secondMainParallel);
-        System.out.printf("\t\tAxis Meridian:\t\t%f\n", sxfPassport.axisMeridian);
-        System.out.printf("\t\tMain Point Parallel:\t%f\n", sxfPassport.mainPointParallel);
-        if (sxfPassport.version == VERSION_4) {
-            System.out.printf("\t\tPole Latitude:\t\t%f\n", sxfPassport.poleLatitude);
-            System.out.printf("\t\tPole Longitude:\t\t%f\n", sxfPassport.poleLongitude);
-        }
-        System.out.printf("\tCoordinate system start position:\n");
-        System.out.printf("\t\tdx0:\t%f\n", sxfPassport.dx0);
-        System.out.printf("\t\tdy0:\t%f\n", sxfPassport.dy0);
     }
 
     /**
@@ -781,5 +729,118 @@ public class SXFPassport {
         mainPointParallel = buffer.getDouble() * 180.0 / Math.PI;
         poleLatitude = buffer.getDouble() * 180.0 / Math.PI;
         poleLongitude = buffer.getDouble() * 180.0 / Math.PI;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Passport Info\n");
+        stringBuilder.append(String.format("\tIdentifier:\t\t0x%08x\n", identifier));
+        stringBuilder.append(String.format("\tLength:\t\t\t%d\n",length));
+        stringBuilder.append(String.format("\tVersion:\t\t0x%08x\n", version));
+        stringBuilder.append(String.format("\tCheckSum:\t\t%d\n", checkSum));
+        stringBuilder.append(String.format("\tCreateDate:\t\t%s\n", createDate));
+        stringBuilder.append(String.format("\tNomenclature:\t\t%s\n", nomenclature));
+        stringBuilder.append(String.format("\tScale:\t\t\t%d\n", scale));
+        stringBuilder.append(String.format("\tName:\t\t\t%s\n", name));
+        stringBuilder.append("\tInfoFlags:\n");
+        stringBuilder.append(String.format("\t\tConditionFlag:\t\t%d\n", conditionFlag));
+        if (version == VERSION_3) {
+            stringBuilder.append(String.format("\t\tProjection flag:\t%s (%s)\n", projectionFlag, projectionFlag.getName()));
+        } else {
+            stringBuilder.append(String.format("\t\tAuto GUID:\t\t%b\n", autoGUID));
+        }
+        stringBuilder.append(String.format("\t\tRealCoordinatesFlag:\t%d\n", realPlaceFlag));
+        stringBuilder.append(String.format("\t\tCodeTypeFlag:\t\t%d\n", codeTypeFlag));
+        stringBuilder.append(String.format("\t\tGeneralizationFlag:\t%d\n", generalizationFlag));
+        stringBuilder.append(String.format("\t\tTextEncodingFlag:\t%s (%s)\n", textEncodingFlag, textEncodingFlag.getName()));
+        if (version == VERSION_4) {
+            stringBuilder.append(String.format("\t\tCoordPrecisionFlag:\t%s (%s)\n", coordinatePrecisionFlag, coordinatePrecisionFlag.getName()));
+        }
+        stringBuilder.append(String.format("\t\tSpecialSortFlag:\t%d\n", orderViewSheetFlag));
+        if (version == VERSION_3) {
+            stringBuilder.append(String.format("\tClassificator code:\t%d\n", code));
+        } else {
+            stringBuilder.append(String.format("\tEPSG:\t\t\t%d\n", srid));
+        }
+        stringBuilder.append("\tThe geometry coordinates of sheet corners:\n");
+        stringBuilder.append(String.format("\t\tX South West:\t%f\n", xSouthWest));
+        stringBuilder.append(String.format("\t\tY South West:\t%f\n", ySouthWest));
+        stringBuilder.append(String.format("\t\tX North West:\t%f\n", xNorthWest));
+        stringBuilder.append(String.format("\t\tY North West:\t%f\n", yNorthWest));
+        stringBuilder.append(String.format("\t\tX North East:\t%f\n", xNorthEast));
+        stringBuilder.append(String.format("\t\tY North East:\t%f\n", yNorthEast));
+        stringBuilder.append(String.format("\t\tX South East:\t%f\n", xSouthEast));
+        stringBuilder.append(String.format("\t\tY South East:\t%f\n", ySouthEast));
+        stringBuilder.append("\t\tGeometry:\n");
+//        stringBuilder.append(String.format("\t\t\tWKB: %s\n", Utils.geometryAsWKB(getNativeGeometry())));
+//        stringBuilder.append(String.format("\t\t\tWKT: %s\n", Utils.geometryAsWKT(getNativeGeometry())));
+        stringBuilder.append("\tThe geographic coordinates of sheet corners:\n");
+        stringBuilder.append(String.format("\t\tB South West:\t%f\n", bSouthWest));
+        stringBuilder.append(String.format("\t\tL South West:\t%f\n", lSouthWest));
+        stringBuilder.append(String.format("\t\tB North West:\t%f\n", bNorthWest));
+        stringBuilder.append(String.format("\t\tL North West:\t%f\n", lNorthWest));
+        stringBuilder.append(String.format("\t\tB North East:\t%f\n", bNorthEast));
+        stringBuilder.append(String.format("\t\tL North East:\t%f\n", lNorthEast));
+        stringBuilder.append(String.format("\t\tB South East:\t%f\n", bSouthEast));
+        stringBuilder.append(String.format("\t\tL South East:\t%f\n", lSouthEast));
+        stringBuilder.append("\t\tGeography:\n");
+//        stringBuilder.append(String.format("\t\t\tWKB: %s\n", Utils.geometryAsWKB(getNativeGeography())));
+//        stringBuilder.append(String.format("\t\t\tWKT: %s\n", Utils.geometryAsWKT(getNativeGeography())));
+        stringBuilder.append("\tThe mathematical basis of the sheet:\n");
+        stringBuilder.append(String.format("\t\tEllipsoid kind:\t\t%s (%s)\n", ellipsoidKind, ellipsoidKind.getName()));
+        stringBuilder.append(String.format("\t\tHeight System:\t\t%s (%s)\n", heightSystem, heightSystem.getName()));
+        stringBuilder.append(String.format("\t\tMaterial Projection:\t%s (%s)\n", mapProjection, mapProjection.getName()));
+        stringBuilder.append(String.format("\t\tCoordinate System:\t%s (%s)\n", coordinateSystem, coordinateSystem.getName()));
+        stringBuilder.append(String.format("\t\tPlane Unit:\t\t%s (%s)\n", planeUnit, planeUnit.getName()));
+        stringBuilder.append(String.format("\t\tHeight Unit:\t\t%s (%s)\n", heightUnit, heightUnit.getName()));
+        stringBuilder.append(String.format("\t\tFrame Kind:\t\t%s (%s)\n", frameKind, frameKind.getName()));
+        stringBuilder.append(String.format("\t\tMap Type:\t\t%s (%s)\n", mapType, mapType.getName()));
+        stringBuilder.append("\tReference data on the source material:\n");
+        stringBuilder.append(String.format("\t\tDate:\t\t\t%s\n", date));
+        stringBuilder.append(String.format("\t\tMaterial Init Kind:\t%s (%s)\n", materialKind, materialKind.getName()));
+        stringBuilder.append(String.format("\t\tMaterial Init Type:\t%s (%s)\n", materialType, materialType.getName()));
+        if (version == VERSION_4) {
+            stringBuilder.append(String.format("\t\tMSK-63 Ident:\t\t%d\n", msk63Ident));
+            stringBuilder.append(String.format("\t\tFrame Border:\t\t%d\n", frameBorder));
+        }
+        stringBuilder.append(String.format("\t\tMagnetic Angle:\t\t%f\n", magneticAngle));
+        stringBuilder.append(String.format("\t\tYear Magnetic Angle:\t%f\n", yearMagneticAngle));
+        stringBuilder.append(String.format("\t\tAngle Date:\t\t%s\n", dateAngle));
+        if (version == VERSION_4) {
+            stringBuilder.append(String.format("\t\tMSK-63 Zone:\t\t%d\n", msk63Zone));
+        }
+        stringBuilder.append(String.format("\t\tRelief Height:\t\t%f\n", reliefHeight));
+        if (version == VERSION_4) {
+            stringBuilder.append(String.format("\tAxis Angle:\t\t%f\n", axisAngle));
+        }
+        stringBuilder.append(String.format("\tDevice Capability:\t%d\n", deviceCapability));
+        stringBuilder.append("\tLocation border on the device:\n");
+        stringBuilder.append(String.format("\t\tX Border Device South West:\t%d\n", xBorderDeviceSouthWest));
+        stringBuilder.append(String.format("\t\tY Border Device South West:\t%d\n", yBorderDeviceSouthWest));
+        stringBuilder.append(String.format("\t\tX Border Device North West:\t%d\n", xBorderDeviceNorthWest));
+        stringBuilder.append(String.format("\t\tY Border Device North West:\t%d\n", yBorderDeviceNorthWest));
+        stringBuilder.append(String.format("\t\tX Border Device North East:\t%d\n", xBorderDeviceNorthEast));
+        stringBuilder.append(String.format("\t\tY Border Device North East:\t%d\n", yBorderDeviceNorthEast));
+        stringBuilder.append(String.format("\t\tX Border Device South East:\t%d\n", xBorderDeviceSouthEast));
+        stringBuilder.append(String.format("\t\tY Border Device South East:\t%d\n", yBorderDeviceSouthEast));
+        stringBuilder.append("\t\tDevice:\n");
+//        stringBuilder.append(String.format("\t\t\tWKB: %s\n", Utils.geometryAsWKB(getNativeDevice())));
+//        stringBuilder.append(String.format("\t\t\tWKT: %s\n", Utils.geometryAsWKT(getNativeDevice())));
+        stringBuilder.append(String.format("\tBorder excode:\t%d\n", borderExcode));
+        stringBuilder.append("\tSource material projection info:\n");
+        stringBuilder.append(String.format("\t\tFirst Main Parallel:\t%f\n", firstMainParallel));
+        stringBuilder.append(String.format("\t\tSecond Main Parallel:\t%f\n", secondMainParallel));
+        stringBuilder.append(String.format("\t\tAxis Meridian:\t\t%f\n", axisMeridian));
+        stringBuilder.append(String.format("\t\tMain Point Parallel:\t%f\n", mainPointParallel));
+        if (version == VERSION_4) {
+            stringBuilder.append(String.format("\t\tPole Latitude:\t\t%f\n", poleLatitude));
+            stringBuilder.append(String.format("\t\tPole Longitude:\t\t%f\n", poleLongitude));
+        }
+        stringBuilder.append("\tCoordinate system start position:\n");
+        stringBuilder.append(String.format("\t\tdx0:\t%f\n", dx0));
+        stringBuilder.append(String.format("\t\tdy0:\t%f", dy0));
+
+        return stringBuilder.toString();
     }
 }

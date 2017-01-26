@@ -145,7 +145,7 @@ public class SxfInfo {
                         }
                     }
                     if (commandLine.hasOption("passport")) {
-                        sxfReader.getPassport().print();
+                        System.out.printf("%s\n", sxfReader.getPassport().toString());
                     }
                     if (commandLine.hasOption("descriptor")) {
                         sxfReader.getDescriptor().print();
