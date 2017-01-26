@@ -531,7 +531,7 @@ public class SXFRecord {
             }
             strlen++;
         }
-        String textEncoding = "UTF16";
+        String textEncoding = "UTF8";
         if (!isUnicode) {
             textEncoding = TextEncoding.CP1251.getName();
         }
