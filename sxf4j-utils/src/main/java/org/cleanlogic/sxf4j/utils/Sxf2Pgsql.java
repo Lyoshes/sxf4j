@@ -410,10 +410,15 @@ public class Sxf2Pgsql {
         ProjCoordinate dstCoordinate = new ProjCoordinate();
         for (Coordinate coordinate : geometry.getCoordinates()) {
             srcCoordinate.setValue(coordinate.x, coordinate.y, coordinate.z);
-            coordinateTransform.transform(srcCoordinate, dstCoordinate);
-            coordinate.setOrdinate(0, dstCoordinate.x);
-            coordinate.setOrdinate(1, dstCoordinate.y);
-            coordinate.setOrdinate(2, dstCoordinate.z);
+            try {
+                coordinateTransform.transform(srcCoordinate, dstCoordinate);
+            } catch (java.lang.IllegalStateException ex) {
+                //
+            } finally {
+                coordinate.setOrdinate(0, dstCoordinate.x);
+                coordinate.setOrdinate(1, dstCoordinate.y);
+                coordinate.setOrdinate(2, dstCoordinate.z);
+            }
         }
         geometry.setSRID(sxf2PgsqlOptions.dstSRID);
         return geometry;

@@ -16,10 +16,13 @@
 
 package org.cleanlogic.sxf4j.utils;
 
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import org.apache.commons.cli.*;
+import org.cleanlogic.sxf4j.SXFPassport;
 import org.cleanlogic.sxf4j.SXFReader;
 import org.cleanlogic.sxf4j.SXFRecord;
+import org.osgeo.proj4j.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +33,10 @@ import java.util.List;
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 public class SxfInfo {
+    private static int srcSRID;
+    private static int dstSRID;
+    private static CoordinateTransform coordinateTransform;
+
     public static void main(String... args) throws IOException {
         Options options = new Options();
 
@@ -96,16 +103,16 @@ public class SxfInfo {
 //            SXFReaderOptions sxfReaderOptions = new SXFReaderOptions();
 //            sxfReaderOptions.quite = commandLine.hasOption("quiet");
 //            sxfReaderOptions.flipCoordinates = commandLine.hasOption('f');
-//            if (commandLine.hasOption('s')) {
-//                String srid = commandLine.getOptionValue('s');
-//                String[] sridPair = srid.split(":");
-//                if (sridPair.length == 2) {
-//                    sxfReaderOptions.srcSRID = Integer.parseInt(sridPair[0]);
-//                    sxfReaderOptions.dstSRID = Integer.parseInt(sridPair[1]);
-//                } else if (sridPair.length == 1) {
-//                    sxfReaderOptions.dstSRID = Integer.parseInt(srid);
-//                }
-//            }
+            if (commandLine.hasOption('s')) {
+                String srid = commandLine.getOptionValue('s');
+                String[] sridPair = srid.split(":");
+                if (sridPair.length == 2) {
+                    srcSRID = Integer.parseInt(sridPair[0]);
+                    dstSRID = Integer.parseInt(sridPair[1]);
+                } else if (sridPair.length == 1) {
+                    dstSRID = Integer.parseInt(srid);
+                }
+            }
 
             StringList geometryTypes = new StringList();
             geometryTypes.add("WKT");
@@ -125,55 +132,45 @@ public class SxfInfo {
 //                if (!sxfReaderOptions.quite) {
 //                    System.out.printf("Process file %s\n", _file.toString());
 //                }
-                SXFReader sxfReader;
                 try {
-                    sxfReader = new SXFReader(_file);
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                    continue;
-                }
-                if (commandLine.hasOption("passport")) {
-                    sxfReader.getPassport().print();
-                }
-                if (commandLine.hasOption("descriptor")) {
-                    sxfReader.getDescriptor().print();
-                }
-                if (commandLine.hasOption("count")) {
-                    System.out.printf("Total records: %d\n", sxfReader.getCount());
-                }
-                String[] recordPair = null;
-                if (commandLine.hasOption("record")) {
-                    recordPair = commandLine.getOptionValue("record").split(":");
-                } else if (commandLine.hasOption("recordGeometry")) {
-                    recordPair = commandLine.getOptionValue("recordGeometry").split(":");
-                }
-                if (recordPair != null) {
-                    if (recordPair.length != 2) {
-                        System.err.println("Record search format must be - <type:i>");
-                        return;
+                    SXFReader sxfReader = new SXFReader(_file);
+                    SXFPassport sxfPassport = sxfReader.getPassport();
+                    int srid = sxfPassport.srid();
+                    if (srid != 0) {
+                        srcSRID = srid;
                     }
-                    String type = recordPair[0];
-                    int value = Integer.parseInt(recordPair[1]);
-                    if (type.equalsIgnoreCase("incode")) {
-                        SXFRecord sxfRecord = sxfReader.getRecordByIncode(value);
-                        if (sxfRecord == null) {
+                    if (!commandLine.hasOption("t")) {
+                        if (srcSRID != dstSRID && dstSRID != 0) {
+                            coordinateTransform = createCoordinateTransform();
+                        }
+                    }
+                    if (commandLine.hasOption("passport")) {
+                        sxfReader.getPassport().print();
+                    }
+                    if (commandLine.hasOption("descriptor")) {
+                        sxfReader.getDescriptor().print();
+                    }
+                    if (commandLine.hasOption("count")) {
+                        System.out.printf("Total records: %d\n", sxfReader.getCount());
+                    }
+                    String[] recordPair = null;
+                    if (commandLine.hasOption("record")) {
+                        recordPair = commandLine.getOptionValue("record").split(":");
+                    } else if (commandLine.hasOption("recordGeometry")) {
+                        recordPair = commandLine.getOptionValue("recordGeometry").split(":");
+                    }
+                    if (recordPair != null) {
+                        if (recordPair.length != 2) {
+                            System.err.println("Record search format must be - <type:i>");
                             return;
                         }
-                        if (commandLine.hasOption("record")) {
-                            System.out.println(sxfRecord.toString());
-                            if (sxfRecord.isTextExsits()) {
-                                printText(sxfRecord);
+                        String type = recordPair[0];
+                        int value = Integer.parseInt(recordPair[1]);
+                        if (type.equalsIgnoreCase("incode")) {
+                            SXFRecord sxfRecord = sxfReader.getRecordByIncode(value);
+                            if (sxfRecord == null) {
+                                return;
                             }
-                            if (sxfRecord.isSemanticExists()) {
-                                printSemantics(sxfRecord);
-                            }
-                        }
-                        if (commandLine.hasOption("recordGeometry")) {
-                            printGeometry(sxfRecord, geometryType);
-                        }
-                    } else if (type.equalsIgnoreCase("excode")) {
-                        List<SXFRecord> sxfRecords = sxfReader.getRecordByExcode(value);
-                        for (SXFRecord sxfRecord : sxfRecords) {
                             if (commandLine.hasOption("record")) {
                                 System.out.println(sxfRecord.toString());
                                 if (sxfRecord.isTextExsits()) {
@@ -184,32 +181,51 @@ public class SxfInfo {
                                 }
                             }
                             if (commandLine.hasOption("recordGeometry")) {
+                                printGeometry(sxfRecord, geometryType);
+                            }
+                        } else if (type.equalsIgnoreCase("excode")) {
+                            List<SXFRecord> sxfRecords = sxfReader.getRecordByExcode(value);
+                            for (SXFRecord sxfRecord : sxfRecords) {
+                                if (commandLine.hasOption("record")) {
+                                    System.out.println(sxfRecord.toString());
+                                    if (sxfRecord.isTextExsits()) {
+                                        printText(sxfRecord);
+                                    }
+                                    if (sxfRecord.isSemanticExists()) {
+                                        printSemantics(sxfRecord);
+                                    }
+                                }
                                 if (commandLine.hasOption("recordGeometry")) {
-                                    printGeometry(sxfRecord, geometryType);
+                                    if (commandLine.hasOption("recordGeometry")) {
+                                        printGeometry(sxfRecord, geometryType);
+                                    }
                                 }
                             }
-                        }
-                    } else if (type.equalsIgnoreCase("number")) {
-                        SXFRecord sxfRecord = sxfReader.getRecordByNumber(value);
-                        if (sxfRecord == null) {
+                        } else if (type.equalsIgnoreCase("number")) {
+                            SXFRecord sxfRecord = sxfReader.getRecordByNumber(value);
+                            if (sxfRecord == null) {
+                                return;
+                            }
+                            if (commandLine.hasOption("record")) {
+                                System.out.println(sxfRecord.toString());
+                                if (sxfRecord.isTextExsits()) {
+                                    printText(sxfRecord);
+                                }
+                                if (sxfRecord.isSemanticExists()) {
+                                    printSemantics(sxfRecord);
+                                }
+                            }
+                            if (commandLine.hasOption("recordGeometry")) {
+                                printGeometry(sxfRecord, geometryType);
+                            }
+                        } else {
+                            System.err.printf("Record search type - %s - not supported.\n", type);
                             return;
                         }
-                        if (commandLine.hasOption("record")) {
-                            System.out.println(sxfRecord.toString());
-                            if (sxfRecord.isTextExsits()) {
-                                printText(sxfRecord);
-                            }
-                            if (sxfRecord.isSemanticExists()) {
-                                printSemantics(sxfRecord);
-                            }
-                        }
-                        if (commandLine.hasOption("recordGeometry")) {
-                            printGeometry(sxfRecord, geometryType);
-                        }
-                    } else {
-                        System.err.printf("Record search type - %s - not supported.\n", type);
-                        return;
                     }
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    continue;
                 }
             }
         } catch (ParseException e) {
@@ -222,6 +238,10 @@ public class SxfInfo {
 
     private static void printGeometry(SXFRecord sxfRecord, String geometryType) throws IOException {
         Geometry geometry = sxfRecord.geometry();
+        if (coordinateTransform != null) {
+            geometry.normalize();
+            geometry = geometryTransform(geometry.norm());
+        }
         if (geometryType.equalsIgnoreCase("WKT")) {
             System.out.printf("Geometry: %s\n", Utils.geometryAsWKT(geometry));
         } else if (geometryType.equalsIgnoreCase("EWKT")) {
@@ -244,5 +264,47 @@ public class SxfInfo {
             System.out.printf("%s", text.toString());
         }
         System.out.println("}");
+    }
+
+    private static CoordinateTransform createCoordinateTransform() {
+        CoordinateTransformFactory coordinateTransformFactory = new CoordinateTransformFactory();
+        CRSFactory crsFactory = new CRSFactory();
+
+        CoordinateReferenceSystem srcCRS;
+        CoordinateReferenceSystem dstCRS;
+
+        if (Utils.SRID_EX.containsKey(srcSRID)) {
+            srcCRS = crsFactory.createFromParameters("EPSG:" + srcSRID, Utils.SRID_EX.get(srcSRID));
+        } else {
+            srcCRS = crsFactory.createFromName("EPSG:" + srcSRID);
+        }
+
+        if (Utils.SRID_EX.containsKey(dstSRID)) {
+            dstCRS = crsFactory.createFromParameters("EPSG:" + dstSRID, Utils.SRID_EX.get(dstSRID));
+        } else {
+            dstCRS = crsFactory.createFromName("EPSG:" + dstSRID);
+        }
+
+        return coordinateTransformFactory.createTransform(srcCRS, dstCRS);
+    }
+
+    private static Geometry geometryTransform(Geometry srcGeometry) {
+        Geometry geometry = (Geometry) srcGeometry.clone();
+        ProjCoordinate srcCoordinate = new ProjCoordinate();
+        ProjCoordinate dstCoordinate = new ProjCoordinate();
+        for (Coordinate coordinate : geometry.getCoordinates()) {
+            srcCoordinate.setValue(coordinate.x, coordinate.y, coordinate.z);
+            try {
+                coordinateTransform.transform(srcCoordinate, dstCoordinate);
+            } catch (java.lang.IllegalStateException ex) {
+                //
+            } finally {
+                coordinate.setOrdinate(0, dstCoordinate.x);
+                coordinate.setOrdinate(1, dstCoordinate.y);
+                coordinate.setOrdinate(2, dstCoordinate.z);
+            }
+        }
+        geometry.setSRID(dstSRID);
+        return geometry;
     }
 }
