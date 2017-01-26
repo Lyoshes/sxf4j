@@ -76,7 +76,7 @@ Dependes:
  |`-h`|Display this help screen.|No|
  |`-I`|Create a spatial index on the geocolumn.|No|
  |`-s`|Set the SRID field. Defaults to detect from passport or 0. Optionally reprojects from given SRID|No|
- |`-t`|Use only PostGIS coordinates transform (ST_Transform), Use with -s option. Not worked with -D. Default: client side convert (Slow)|No|
+ |`-t`|Use only PostGIS coordinates transform (ST_Transform), Use with -s option. Not worked with -D. Default: client side convert|No|
  |`-T`|Specify the tablespace for the new table. Note that indexes will still use the default tablespace unless the -X flag is also used.|No|
  |`-w`|Output WKT instead of WKB.  Note that this can result in coordinate drift.|No|
  |`-W`|Specify the character encoding of SXF attribute column.|No, default `UTF8`|
