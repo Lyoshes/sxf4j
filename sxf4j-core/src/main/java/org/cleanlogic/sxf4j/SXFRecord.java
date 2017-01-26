@@ -730,9 +730,30 @@ public class SXFRecord {
             holes[i] = geometryFactory.createLinearRing(coordinateSequence);
         }
 
-        Polygon polygon = geometryFactory.createPolygon(shell, holes);
+        // Second code define multipolygon or not take from documentation, may be bug in documentation.
+        if (isMultiPolygon) {
+            // If any holes not in shell this is multipolygons and all holes converted into shells
+            for (LinearRing hole : holes) {
+                if (!shell.contains(hole)) {
+                    continue;
+                } else {
+                    isMultiPolygon = false;
+                    break;
+                }
+            }
+        }
+        Polygon[] polygons;
+        if (!isMultiPolygon) {
+            polygons = new Polygon[] {geometryFactory.createPolygon(shell, holes)};
+        } else {
+            polygons = new Polygon[1 + holes.length];
+            polygons[0] = geometryFactory.createPolygon(shell);
+            for (int i = 0; i < holes.length; i++) {
+                polygons[i + 1] = geometryFactory.createPolygon(holes[i]);
+            }
+        }
 
-        return geometryFactory.createMultiPolygon(new Polygon[] {polygon});
+        return geometryFactory.createMultiPolygon(polygons);
     }
 
     private Geometry createMultiPoint(double[][] coordinates, double[][][] subCoordinates) {
