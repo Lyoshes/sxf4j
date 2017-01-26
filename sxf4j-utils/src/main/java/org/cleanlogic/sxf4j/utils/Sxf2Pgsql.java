@@ -367,13 +367,27 @@ public class Sxf2Pgsql {
     }
 
     private static String createIndex(Local local) {
-        return String.format("CREATE INDEX \"indx_%s_%s\" ON \"%s\".\"%s_%s\" USING GIST (\"%s\");\n",
-                sxf2PgsqlOptions.tableName.toLowerCase(),
-                local.toString().toLowerCase(),
-                sxf2PgsqlOptions.schemaName,
-                sxf2PgsqlOptions.tableName,
-                local,
-                sxf2PgsqlOptions.geocolumnName);
+        String indexStr = String.format("CREATE INDEX \"%s_%s_%s_gist\" ON \"%s\".\"%s_%s\" USING GIST (\"%s\");\n",
+                                        sxf2PgsqlOptions.tableName.toLowerCase(),
+                                        local.toString().toLowerCase(),
+                                        sxf2PgsqlOptions.geocolumnName.toLowerCase(),
+                                        sxf2PgsqlOptions.schemaName,
+                                        sxf2PgsqlOptions.tableName,
+                                        local,
+                                        sxf2PgsqlOptions.geocolumnName);
+        indexStr += String.format("CREATE INDEX \"%s_%s_excode_btree\" ON \"%s\".\"%s_%s\" USING BTREE (\"excode\");\n",
+                                    sxf2PgsqlOptions.tableName.toLowerCase(),
+                                    local.toString().toLowerCase(),
+                                    sxf2PgsqlOptions.schemaName,
+                                    sxf2PgsqlOptions.tableName,
+                                    local);
+        indexStr += String.format("CREATE INDEX \"%s_%s_number_btree\" ON \"%s\".\"%s_%s\" USING BTREE (\"number\");\n",
+                                    sxf2PgsqlOptions.tableName.toLowerCase(),
+                                    local.toString().toLowerCase(),
+                                    sxf2PgsqlOptions.schemaName,
+                                    sxf2PgsqlOptions.tableName,
+                                    local);
+        return indexStr;
     }
 
     private static String getGeometryType(Local local) {
