@@ -678,7 +678,7 @@ public class SXFRecord {
         }
         if (clonePoint) {
             for (int n = 0; n < 3; n++) {
-                coordinateSequence.setOrdinate(1, n, coordinates[1][n]);
+                coordinateSequence.setOrdinate(1, n, coordinates[0][n]);
             }
         }
         LineString[] lines = new LineString[1 + subCoordinates.length];
@@ -701,7 +701,7 @@ public class SXFRecord {
             }
             if (clonePoint) {
                 for (int n = 0; n < 3; n++) {
-                    coordinateSequence.setOrdinate(1, n, subCoordinate[1][n]);
+                    coordinateSequence.setOrdinate(1, n, subCoordinate[0][n]);
                 }
             }
             lines[i + 1] = geometryFactory.createLineString(coordinateSequence);
