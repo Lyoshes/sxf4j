@@ -19,7 +19,6 @@ package org.cleanlogic.sxf4j.utils;
 import java.util.ArrayList;
 
 /**
- * StringList class for contains with ignore case
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 public class StringList extends ArrayList<String> {
