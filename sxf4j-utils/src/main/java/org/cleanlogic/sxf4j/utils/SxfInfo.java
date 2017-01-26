@@ -30,7 +30,7 @@ import java.util.List;
  * @author Serge Silaev aka iSergio <s.serge.b@gmail.com>
  */
 public class SxfInfo {
-    public static void main(String... args) {
+    public static void main(String... args) throws IOException {
         Options options = new Options();
 
         Option quietOption = new Option("q", "quiet", false, "Not print warning messages");
@@ -161,10 +161,12 @@ public class SxfInfo {
                         }
                         if (commandLine.hasOption("record")) {
                             System.out.println(sxfRecord.toString());
-                            if (sxfRecord.isSemanticExists()) {
+                            if (sxfRecord.isTextExsits()) {
                                 printText(sxfRecord);
                             }
-                            printSemantics(sxfRecord);
+                            if (sxfRecord.isSemanticExists()) {
+                                printSemantics(sxfRecord);
+                            }
                         }
                         if (commandLine.hasOption("recordGeometry")) {
                             printGeometry(sxfRecord, geometryType);
@@ -174,10 +176,12 @@ public class SxfInfo {
                         for (SXFRecord sxfRecord : sxfRecords) {
                             if (commandLine.hasOption("record")) {
                                 System.out.println(sxfRecord.toString());
-                                if (sxfRecord.isSemanticExists()) {
+                                if (sxfRecord.isTextExsits()) {
                                     printText(sxfRecord);
                                 }
-                                printSemantics(sxfRecord);
+                                if (sxfRecord.isSemanticExists()) {
+                                    printSemantics(sxfRecord);
+                                }
                             }
                             if (commandLine.hasOption("recordGeometry")) {
                                 if (commandLine.hasOption("recordGeometry")) {
@@ -192,10 +196,12 @@ public class SxfInfo {
                         }
                         if (commandLine.hasOption("record")) {
                             System.out.println(sxfRecord.toString());
-                            if (sxfRecord.isSemanticExists()) {
+                            if (sxfRecord.isTextExsits()) {
                                 printText(sxfRecord);
                             }
-                            printSemantics(sxfRecord);
+                            if (sxfRecord.isSemanticExists()) {
+                                printSemantics(sxfRecord);
+                            }
                         }
                         if (commandLine.hasOption("recordGeometry")) {
                             printGeometry(sxfRecord, geometryType);
@@ -214,41 +220,29 @@ public class SxfInfo {
         }
     }
 
-    private static void printGeometry(SXFRecord sxfRecord, String geometryType) {
-//        Geometry srcGeometry = sxfRecord.getMetric().getSrcGeometry();
-//        Geometry dstGeometry = sxfRecord.getMetric().getDstGeometry();
-//
-//        if (geometryType.equalsIgnoreCase("WKT")) {
-//            System.out.printf("Source: %s\n", Utils.geometryAsWKT(srcGeometry));
-//            if (dstGeometry != null) {
-//                System.out.printf("Target: %s\n", Utils.geometryAsWKT(dstGeometry));
-//            }
-//        } else if (geometryType.equalsIgnoreCase("EWKT")) {
-//            System.out.printf("Source: %s\n", Utils.geometryAsEWKT(srcGeometry));
-//            if (dstGeometry != null) {
-//                System.out.printf("Target: %s\n", Utils.geometryAsEWKT(dstGeometry));
-//            }
-//        } else if (geometryType.equalsIgnoreCase("WKB")) {
-//            System.out.printf("Source: %s\n", Utils.geometryAsWKB(srcGeometry));
-//            if (dstGeometry != null) {
-//                System.out.printf("Target: %s\n", Utils.geometryAsWKB(dstGeometry));
-//            }
-//        }
+    private static void printGeometry(SXFRecord sxfRecord, String geometryType) throws IOException {
+        Geometry geometry = sxfRecord.geometry();
+        if (geometryType.equalsIgnoreCase("WKT")) {
+            System.out.printf("Geometry: %s\n", Utils.geometryAsWKT(geometry));
+        } else if (geometryType.equalsIgnoreCase("EWKT")) {
+            System.out.printf("Geometry: %s\n", Utils.geometryAsEWKT(geometry));
+        } else if (geometryType.equalsIgnoreCase("WKB")) {
+            System.out.printf("Geometry: %s\n", Utils.geometryAsWKB(geometry));
+        }
     }
 
     private static void printSemantics(SXFRecord sxfRecord) {
         System.out.printf("RecordSemantics info:\n");
         for (SXFRecord.Semantic semantic : sxfRecord.semantics()) {
-
+            System.out.printf("%s\n", semantic.toString());
         }
-//        List<SXFRecordSemantic> sxfRecordSemantics = sxfRecord.getSemantics();
-//        for (SXFRecordSemantic sxfRecordSemantic : sxfRecordSemantics) {
-//            System.out.printf("\t");
-//            sxfRecordSemantic.print();
-//        }
     }
 
-    private static void printText(SXFRecord sxfRecord) {
-//®
+    private static void printText(SXFRecord sxfRecord) throws IOException {
+        System.out.printf("Text:\t{");
+        for (SXFRecord.Text text : sxfRecord.texts()) {
+            System.out.printf("%s", text.toString());
+        }
+        System.out.println("}");
     }
 }
