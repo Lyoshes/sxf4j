@@ -11,7 +11,7 @@ On this moment supports:
 
 Dependes:
  - Java Topology Suite (JTS) - for create geometry and provide them out in WKT, WKB, EWKT formats.
- - PROJ4J - for client side reproject coordinates.
+ - PROJ4J - for client side transform coordinates (only for sxf4j-utils).
  
  ## Getting Started
  ```
