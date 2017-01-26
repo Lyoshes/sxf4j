@@ -57,10 +57,12 @@ public class SXFReader {
         readableByteChannel = raf.getChannel();
         buffer = ((FileChannel)readableByteChannel).map(FileChannel.MapMode.READ_ONLY, 0, ((FileChannel) readableByteChannel).size());
 
-        geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), 0);
-
         sxfPassport = new SXFPassport();
         sxfPassport.read(buffer, true);
+
+        // Set srid for factory
+        geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), sxfPassport.srid());
+
         sxfDescriptor = new SXFDescriptor(sxfPassport);
         sxfDescriptor.read(buffer, true);
         // Now we can read records.
