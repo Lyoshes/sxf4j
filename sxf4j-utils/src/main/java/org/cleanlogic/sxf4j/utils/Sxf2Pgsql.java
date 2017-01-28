@@ -198,7 +198,7 @@ public class Sxf2Pgsql {
 
             for (File file : files) {
                 try {
-                    SXFReader sxfReader = new SXFReader(file);
+                    SXFReader sxfReader = new SXFReader(file, true, true);
                     SXFPassport sxfPassport = sxfReader.getPassport();
                     int srid = sxfPassport.srid();
                     //

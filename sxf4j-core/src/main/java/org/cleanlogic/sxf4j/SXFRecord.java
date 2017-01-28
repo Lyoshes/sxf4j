@@ -350,16 +350,38 @@ public class SXFRecord {
 
     /**
      * Function read only record header information. Geometry, Text, and Semantics read by request.
-     * @param buffer Opened buffer SXF file
+     * @param buffer Opened buffer SXF file.
      * @param strict Show message through println or IOException.
      * @throws IOException exception if wrong.
      */
     public void read(ByteBuffer buffer, boolean strict) throws IOException {
+        read(buffer, strict, false);
+    }
+
+    /**
+     * Function read only record header information. Geometry, Text, and Semantics read by request.
+     * @param buffer Opened buffer SXF file.
+     * @param strict Show message through println or IOException.
+     * @param findNext find next record if {@link #IDENTIFIER} is wrong
+     * @throws IOException exception if wrong.
+     */
+    public void read(ByteBuffer buffer, boolean strict, boolean findNext) throws IOException {
         this.offset = buffer.position();
         this.buffer = buffer;
 
         identifier = buffer.getInt();
-        checkIdentifier(strict);
+        if (!findNext) {
+            checkIdentifier(strict);
+        } else {
+            while (identifier!= IDENTIFIER && buffer.remaining() > 0) {
+                identifier = buffer.getInt();
+                checkIdentifier(false);
+            }
+        }
+
+        if (buffer.remaining() == 0) {
+            return;
+        }
 
         if (sxfPassport.getVersion() == SXFPassport.VERSION_3) {
             read3(buffer, strict);

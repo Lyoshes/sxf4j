@@ -48,27 +48,48 @@ public class SXFReader {
     private GeometryFactory geometryFactory;
 
     /**
-     * Defaule constructor which open SXF file, read passport and description and first record.
-     * @param file
-     * @throws IOException
+     * Constructor of SXF file format reader.
+     * @param file file of SXF format for read.
+     * @throws IOException If problems arise.
      */
     public SXFReader(File file) throws IOException {
+        this(file, false, false);
+    }
+
+    /**
+     * Constructor of SXF file format reader.
+     * @param file file of SXF format for read.
+     * @param strict exceptions output format.
+     * @throws IOException If problems arise.
+     */
+    public SXFReader(File file, boolean strict) throws IOException {
+        this(file, strict, false);
+    }
+
+    /**
+     * Constructor of SXF file format reader.
+     * @param file file of SXF format for read.
+     * @param strict exceptions output format.
+     * @param findNext if identifier of record not equals {@link SXFRecord#IDENTIFIER} will be search process to find next correct identifier.
+     * @throws IOException If problems arise.
+     */
+    public SXFReader(File file, boolean strict, boolean findNext) throws IOException {
         RandomAccessFile raf = new RandomAccessFile(file, "r");
         readableByteChannel = raf.getChannel();
         buffer = ((FileChannel)readableByteChannel).map(FileChannel.MapMode.READ_ONLY, 0, ((FileChannel) readableByteChannel).size());
 
         sxfPassport = new SXFPassport();
-        sxfPassport.read(buffer, true);
+        sxfPassport.read(buffer, strict);
 
         // Set srid for factory
         geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), sxfPassport.srid());
 
         sxfDescriptor = new SXFDescriptor(sxfPassport);
-        sxfDescriptor.read(buffer, true);
+        sxfDescriptor.read(buffer, strict);
         // Now we can read records.
         while (buffer.remaining() > 0) {
             SXFRecord sxfRecord = new SXFRecord(sxfPassport, geometryFactory);
-            sxfRecord.read(buffer, true);
+            sxfRecord.read(buffer, strict, findNext);
             sxfRecords.add(sxfRecord);
         }
         // Need find border record and set dx0 and dy0 for passport

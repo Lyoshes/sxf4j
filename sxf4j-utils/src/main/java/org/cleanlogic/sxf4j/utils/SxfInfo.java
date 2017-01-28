@@ -134,7 +134,7 @@ public class SxfInfo {
 //                    System.out.printf("Process file %s\n", _file.toString());
 //                }
                 try {
-                    SXFReader sxfReader = new SXFReader(_file);
+                    SXFReader sxfReader = new SXFReader(_file, true, true);
                     SXFPassport sxfPassport = sxfReader.getPassport();
                     int srid = sxfPassport.srid();
                     //
