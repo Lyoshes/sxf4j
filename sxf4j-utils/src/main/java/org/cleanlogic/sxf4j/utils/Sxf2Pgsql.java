@@ -24,6 +24,7 @@ import org.cleanlogic.sxf4j.SXFReader;
 import org.cleanlogic.sxf4j.SXFRecord;
 import org.cleanlogic.sxf4j.enums.Local;
 import org.osgeo.proj4j.*;
+import org.osgeo.proj4j.io.Proj4FileReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -178,15 +179,20 @@ public class Sxf2Pgsql {
             // Begin document
             System.out.println("SET CLIENT_ENCODING TO UTF8;");
             System.out.println("SET STANDARD_CONFORMING_STRINGS TO ON;");
+            System.out.println("SET STATEMENT_TIMEOUT TO 0;");
+            System.out.println("SET CLIENT_MIN_MESSAGES TO WARNING;");
+
+            System.out.println("CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;");
+
             // Create schema.table at once (use from command line params)
             if (!useNomenclature && sxf2PgsqlOptions.dropTable) {
                 System.out.print(dropTables());
             }
             // Single table mode
             if (!useNomenclature) {
-                if (sxf2PgsqlOptions.transaction) {
-                    System.out.println("BEGIN;");
-                }
+//                if (sxf2PgsqlOptions.transaction) {
+//                    System.out.println("BEGIN;");
+//                }
                 System.out.print(createTables());
             }
 
@@ -195,6 +201,16 @@ public class Sxf2Pgsql {
                     SXFReader sxfReader = new SXFReader(file);
                     SXFPassport sxfPassport = sxfReader.getPassport();
                     int srid = sxfPassport.srid();
+                    //
+                    if (!Utils.SRID_EX.containsKey(srid)) {
+                        Proj4FileReader proj4FileReader = new Proj4FileReader();
+                        String params[] = proj4FileReader.readParametersFromFile("EPSG", String.valueOf(srid));
+                        if (params.length == 0) {
+                            // Wrong srid. Force from passport.
+                            srid = sxfPassport.srid(true);
+                        }
+                    }
+                    //
                     if (srid != 0) {
                         sxf2PgsqlOptions.srcSRID = srid;
                     }
@@ -242,9 +258,9 @@ public class Sxf2Pgsql {
                         System.out.print(createIndex(local));
                     }
                 }
-                if (sxf2PgsqlOptions.transaction) {
-                    System.out.println("END;");
-                }
+//                if (sxf2PgsqlOptions.transaction) {
+//                    System.out.println("END;");
+//                }
             }
         } catch (ParseException e) {
             System.out.println(e.getMessage());
@@ -427,6 +443,7 @@ public class Sxf2Pgsql {
     private static String textsToString(List<SXFRecord.Text> texts) {
         return textsToString(texts, false);
     }
+
     private static String textsToString(List<SXFRecord.Text> texts, boolean copy) {
         StringBuilder stringBuilder = new StringBuilder();
         for (SXFRecord.Text text : texts) {

@@ -23,6 +23,7 @@ import org.cleanlogic.sxf4j.SXFPassport;
 import org.cleanlogic.sxf4j.SXFReader;
 import org.cleanlogic.sxf4j.SXFRecord;
 import org.osgeo.proj4j.*;
+import org.osgeo.proj4j.io.Proj4FileReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -136,6 +137,16 @@ public class SxfInfo {
                     SXFReader sxfReader = new SXFReader(_file);
                     SXFPassport sxfPassport = sxfReader.getPassport();
                     int srid = sxfPassport.srid();
+                    //
+                    if (!Utils.SRID_EX.containsKey(srid)) {
+                        Proj4FileReader proj4FileReader = new Proj4FileReader();
+                        String params[] = proj4FileReader.readParametersFromFile("EPSG", String.valueOf(srid));
+                        if (params.length == 0) {
+                            // Wrong srid. Force from passport.
+                            srid = sxfPassport.srid(true);
+                        }
+                    }
+                    //
                     if (srid != 0) {
                         srcSRID = srid;
                     }

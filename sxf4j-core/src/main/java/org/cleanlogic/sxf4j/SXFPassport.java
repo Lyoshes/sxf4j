@@ -475,8 +475,18 @@ public class SXFPassport {
      * @return srid of sheet.
      */
     public int srid() {
-        // In some files srid sets to 65537
-        if (srid == 65537) {
+        return srid(false);
+    }
+
+    /**
+     * Returns or detect from passport params SRID.
+     * @param force - Force detect srid of sheet, passport field srid full ignore.
+     * @return srid of sheet.
+     */
+    public int srid(boolean force) {
+        // In some files srid sets to 65537 or 843924818 or something else.
+        // Force set srid to 0 and calculate from passport params.
+        if (force) {
             srid = 0;
         }
 
