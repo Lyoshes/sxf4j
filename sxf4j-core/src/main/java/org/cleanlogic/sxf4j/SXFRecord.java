@@ -366,6 +366,9 @@ public class SXFRecord {
      * @throws IOException exception if wrong.
      */
     public void read(ByteBuffer buffer, boolean strict, boolean findNext) throws IOException {
+        if (buffer.remaining() < 32) {
+            return;
+        }
         this.offset = buffer.position();
         this.buffer = buffer;
 
@@ -373,13 +376,15 @@ public class SXFRecord {
         if (!findNext) {
             checkIdentifier(strict);
         } else {
-            while (identifier!= IDENTIFIER && buffer.remaining() > 0) {
+            while (identifier != IDENTIFIER && buffer.remaining() > 4) {
                 identifier = buffer.getInt();
-                checkIdentifier(false);
+            }
+            if (identifier != IDENTIFIER) {
+                return;
             }
         }
-
-        if (buffer.remaining() == 0) {
+        // Record header length is 32
+        if (buffer.remaining() < 32) {
             return;
         }
 
@@ -529,6 +534,10 @@ public class SXFRecord {
         }
         // Set offset to metric
         buffer.position(metricOffset);
+
+        if (buffer.remaining() < (length - 32)) {
+            throw new IOException("Buffer remaining bytes less then record size!");
+        }
 
         // Read main record metric
         int pointCount = (this.pointCount == 65537 ? bigRecordPointCount : this.pointCount);

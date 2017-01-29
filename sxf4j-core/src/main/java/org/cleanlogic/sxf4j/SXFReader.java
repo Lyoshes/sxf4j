@@ -47,31 +47,20 @@ public class SXFReader {
      */
     private GeometryFactory geometryFactory;
 
-    /**
-     * Constructor of SXF file format reader.
-     * @param file file of SXF format for read.
-     * @throws IOException If problems arise.
-     */
     public SXFReader(File file) throws IOException {
         this(file, false, false);
     }
 
-    /**
-     * Constructor of SXF file format reader.
-     * @param file file of SXF format for read.
-     * @param strict exceptions output format.
-     * @throws IOException If problems arise.
-     */
     public SXFReader(File file, boolean strict) throws IOException {
         this(file, strict, false);
     }
 
     /**
      * Constructor of SXF file format reader.
-     * @param file file of SXF format for read.
-     * @param strict exceptions output format.
-     * @param findNext if identifier of record not equals {@link SXFRecord#IDENTIFIER} will be search process to find next correct identifier.
-     * @throws IOException If problems arise.
+     * @param file file of SXF format for read
+     * @param strict exceptions output.
+     * @param findNext
+     * @throws IOException
      */
     public SXFReader(File file, boolean strict, boolean findNext) throws IOException {
         RandomAccessFile raf = new RandomAccessFile(file, "r");
@@ -87,7 +76,7 @@ public class SXFReader {
         sxfDescriptor = new SXFDescriptor(sxfPassport);
         sxfDescriptor.read(buffer, strict);
         // Now we can read records.
-        while (buffer.remaining() > 0) {
+        while (buffer.remaining() >= 32) {
             SXFRecord sxfRecord = new SXFRecord(sxfPassport, geometryFactory);
             sxfRecord.read(buffer, strict, findNext);
             sxfRecords.add(sxfRecord);
