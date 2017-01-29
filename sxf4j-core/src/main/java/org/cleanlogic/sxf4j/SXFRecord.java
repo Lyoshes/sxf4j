@@ -862,22 +862,54 @@ public class SXFRecord {
      * @return {@link MultiPolygon} geometry.
      */
     private Geometry createMultiPolygon(double[][] coordinates, double[][][] subCoordinates) {
-        CoordinateSequence coordinateSequence = geometryFactory.getCoordinateSequenceFactory().create(coordinates.length, 3);
+        // By default SQUARE objects is closed
+        boolean isClosed = true;
+        // Check this
+        if (coordinates[0][0] != coordinates[coordinates.length - 1][0] ||
+                coordinates[0][1] != coordinates[coordinates.length - 1][1] ||
+                coordinates[0][2] != coordinates[coordinates.length - 1][2]) {
+            isClosed = false;
+        }
+        CoordinateSequence coordinateSequence = geometryFactory.getCoordinateSequenceFactory().create((isClosed ? coordinates.length : coordinates.length + 1), 3);
         for (int i = 0; i < coordinates.length; i++) {
             for (int n = 0; n < 3; n++) {
                 coordinateSequence.setOrdinate(i, n, coordinates[i][n]);
+            }
+        }
+        if (!isClosed) {
+            for (int n = 0; n < 3; n++) {
+                coordinateSequence.setOrdinate(coordinates.length, n, coordinates[0][n]);
             }
         }
         LinearRing shell = geometryFactory.createLinearRing(coordinateSequence);
 
         LinearRing[] holes = new LinearRing[subCoordinates.length];
         for (int i = 0; i < subCoordinates.length; i++) {
-            coordinateSequence = geometryFactory.getCoordinateSequenceFactory().create(subCoordinates[i].length, 3);
-            for (int k = 0; k < subCoordinates[i].length; k++) {
+            double[][] holeCoordinates = subCoordinates[i];
+            // In broken files SQUARE may be length = 0. Check this and create empty LinearString.
+            if (holeCoordinates.length == 0) {
+                holes[i] = geometryFactory.createLinearRing(new Coordinate[0]);
+                continue;
+            }
+            isClosed = true;
+            if (holeCoordinates[0][0] != holeCoordinates[holeCoordinates.length - 1][0] ||
+                    holeCoordinates[0][1] != holeCoordinates[holeCoordinates.length - 1][1] ||
+                    holeCoordinates[0][2] != holeCoordinates[holeCoordinates.length - 1][2]) {
+                isClosed = false;
+            }
+
+            coordinateSequence = geometryFactory.getCoordinateSequenceFactory().create(isClosed ? holeCoordinates.length : holeCoordinates.length + 1, 3);
+            for (int k = 0; k < holeCoordinates.length; k++) {
                 for (int n = 0; n < 3; n++) {
-                    coordinateSequence.setOrdinate(k, n, subCoordinates[i][k][n]);
+                    coordinateSequence.setOrdinate(k, n, holeCoordinates[k][n]);
                 }
             }
+            if (!isClosed) {
+                for (int n = 0; n < 3; n++) {
+                    coordinateSequence.setOrdinate(holeCoordinates.length, n, holeCoordinates[0][n]);
+                }
+            }
+
             holes[i] = geometryFactory.createLinearRing(coordinateSequence);
         }
 
@@ -885,9 +917,7 @@ public class SXFRecord {
         if (isMultiPolygon) {
             // If any holes not in shell this is multipolygons and all holes converted into shells
             for (LinearRing hole : holes) {
-                if (!shell.contains(hole)) {
-                    continue;
-                } else {
+                if (shell.contains(hole)) {
                     isMultiPolygon = false;
                     break;
                 }
@@ -916,15 +946,19 @@ public class SXFRecord {
     private Geometry createMultiPoint(double[][] coordinates, double[][][] subCoordinates) {
         Point[] points = new Point[1 + subCoordinates.length];
         CoordinateSequence coordinateSequence = geometryFactory.getCoordinateSequenceFactory().create(1, 3);
-        for (int n = 0; n < 3; n++) {
-            coordinateSequence.setOrdinate(0, n, coordinates[0][n]);
+        if (coordinates.length > 0) {
+            for (int n = 0; n < 3; n++) {
+                coordinateSequence.setOrdinate(0, n, coordinates[0][n]);
+            }
         }
         points[0] = geometryFactory.createPoint(coordinateSequence);
 
         for (int i = 0; i < subCoordinates.length; i++) {
             coordinateSequence = geometryFactory.getCoordinateSequenceFactory().create(1, 3);
-            for (int n = 0; n < 3; n++) {
-                coordinateSequence.setOrdinate(0, n, subCoordinates[i][0][n]);
+            if (subCoordinates[i].length > 0) {
+                for (int n = 0; n < 3; n++) {
+                    coordinateSequence.setOrdinate(0, n, subCoordinates[i][0][n]);
+                }
             }
             points[i + 1] = geometryFactory.createPoint(coordinateSequence);
         }
