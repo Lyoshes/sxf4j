@@ -4,6 +4,12 @@ Development for use SXF russian vector maps in java with support PostGIS and etc
 Library was designed according with documentation on [SXF format of version 4](http://gistoolkit.ru/download/doc/sxf4bin.pdf) 
 and [SXF format of version 3](http://public.gisinfo.ru/Forum/SXF3-30.TXT). All documentation on Russian language.
 
+Data on which are tested
+
+![separated](https://github.com/iSergio/sxf4j/blob/master/images/scales.png?raw=true)
+
+![separated](https://github.com/iSergio/sxf4j/blob/master/images/primitives.png?raw=true)
+
 Library based on Read/Write.
 On this moment supports:
 - [x] Read SXF
