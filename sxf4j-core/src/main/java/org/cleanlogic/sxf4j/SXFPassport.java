@@ -367,6 +367,10 @@ public class SXFPassport {
         return version;
     }
 
+    public int getCheckSum() {
+        return checkSum;
+    }
+
     /**
      * Get length of 
      * @return length of passport (must be 256 or 400).
@@ -427,6 +431,10 @@ public class SXFPassport {
                 new double[] {xBorderDeviceSouthEast, yBorderDeviceSouthEast}};
     }
 
+    public double getAxisAngle() {
+        return axisAngle;
+    }
+
     /**
      * Device capability (meters on pixel)
      * @return dpi
@@ -441,6 +449,10 @@ public class SXFPassport {
      */
     public int getScale() {
         return scale;
+    }
+
+    public String getName() {
+        return name;
     }
 
     /**
@@ -522,12 +534,56 @@ public class SXFPassport {
         return zone;
     }
 
+    public String getCreateDate() {
+        return createDate;
+    }
+
     /**
      * Sheet nomenclature.
      * @return nomenclature.
      */
     public String getNomenclature() {
         return nomenclature;
+    }
+
+    public Projection getProjectionFlag() {
+        return projectionFlag;
+    }
+
+    public EllipsoidKind getEllipsoidKind() {
+        return ellipsoidKind;
+    }
+
+    public HeightSystem getHeightSystem() {
+        return heightSystem;
+    }
+
+    public MapProjection getMapProjection() {
+        return mapProjection;
+    }
+
+    public CoordinateSystem getCoordinateSystem() {
+        return coordinateSystem;
+    }
+
+    public Unit getPlaneUnit() {
+        return planeUnit;
+    }
+
+    public Unit getHeightUnit() {
+        return heightUnit;
+    }
+
+    public FrameKind getFrameKind() {
+        return frameKind;
+    }
+
+    public MapType getMapType() {
+        return mapType;
+    }
+
+    public String getDate() {
+        return date;
     }
 
     /**
