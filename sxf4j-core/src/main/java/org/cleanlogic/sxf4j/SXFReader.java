@@ -16,9 +16,7 @@
 
 package org.cleanlogic.sxf4j;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.PrecisionModel;
+import com.vividsolutions.jts.geom.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -95,6 +93,22 @@ public class SXFReader {
 
     public SXFPassport getPassport() {
         return sxfPassport;
+    }
+
+    /**
+     * Create polygon geometry of SXF passport (!) sheet through geometry factory
+     * @return sheet geometry
+     */
+    public Geometry getPassportPolygon() {
+        double[][] xy = sxfPassport.getXY();
+        Coordinate[] coordinates = new Coordinate[xy.length + 1];
+        for (int i = 0; i < xy.length; i++) {
+            Coordinate coordinate = new Coordinate(xy[i][1], xy[i][0]);
+            coordinates[i] = coordinate;
+        }
+        coordinates[xy.length] = new Coordinate(xy[0][1], xy[0][0]);
+        LinearRing shell = geometryFactory.createLinearRing(coordinates);
+        return geometryFactory.createPolygon(shell);
     }
 
     public SXFDescriptor getDescriptor() {
