@@ -1,5 +1,6 @@
 package org.cleanlogic.sxf4j;
 
+import com.vividsolutions.jts.geom.Geometry;
 import junit.framework.TestCase;
 import junit.textui.TestRunner;
 import org.junit.Test;
@@ -40,5 +41,14 @@ public class SxfReaderTest extends TestCase {
         } catch (IOException e) {
             assertNotNull(e);
         }
+    }
+
+    @Test
+    public void testSxfReaderSheetPolygon() throws IOException {
+        File file = new File("src/test/resources/K37007.SXF");
+        SXFReader sxfReader = new SXFReader(file);
+        Geometry polygon = sxfReader.getPassportPolygon();
+        sxfReader.close();
+        assertNotNull(polygon);
     }
 }
