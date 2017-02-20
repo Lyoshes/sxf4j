@@ -586,6 +586,106 @@ public class SXFPassport {
         return date;
     }
 
+    public int getCondition() {
+        return conditionFlag;
+    }
+
+    public Projection getProjection() {
+        return projectionFlag;
+    }
+
+    public boolean getAutoGuid() {
+        return autoGUID;
+    }
+
+    public int getRealPlace() {
+        return realPlaceFlag;
+    }
+
+    public int getCodeType() {
+        return codeTypeFlag;
+    }
+
+    public int getGeneralization() {
+        return generalizationFlag;
+    }
+
+    public TextEncoding getTextEncoding() {
+        return textEncodingFlag;
+    }
+
+    public CoordinatePrecision getCoordinatePrecision() {
+        return coordinatePrecisionFlag;
+    }
+
+    public int getOrderViewSheet() {
+        return orderViewSheetFlag;
+    }
+
+    public MapInitKind getMapInitKind() {
+        return materialKind;
+    }
+
+    public MapInitType getMaterialInitType() {
+        return materialType;
+    }
+
+    public int getMsk63Ident() {
+        return msk63Ident;
+    }
+
+    public int getFrameBorder() {
+        return frameBorder;
+    }
+
+    public double getMagneticAngle() {
+        return magneticAngle;
+    }
+
+    public double getMeridianAngle() {
+        return meridianAngle;
+    }
+
+    public double getYearMagneticAngle() {
+        return yearMagneticAngle;
+    }
+
+    public String getDateAngle() {
+        return dateAngle;
+    }
+
+    public int getMsk63Zone() {
+        return msk63Zone;
+    }
+
+    public double getReliefHeight() {
+        return reliefHeight;
+    }
+
+    public double getFirstMainParallel() {
+        return firstMainParallel;
+    }
+
+    public double getSecondMainParallel() {
+        return secondMainParallel;
+    }
+
+    public double getAxisMeridian() {
+        return axisMeridian;
+    }
+
+    public double getMainPointParallel() {
+        return mainPointParallel;
+    }
+
+    public double getPoleLatitude() {
+        return poleLatitude;
+    }
+
+    public double getPoleLongitude() {
+        return poleLongitude;
+    }
+
     /**
      * Fill {@link SXFPassport} of 3 version fields.
      * @param buffer opened ByteBuffer of file.
