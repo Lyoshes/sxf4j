@@ -47,7 +47,7 @@ public class SxfReaderTest extends TestCase {
     public void testSxfReaderSheetPolygon() throws IOException {
         File file = new File("src/test/resources/K37007.SXF");
         SXFReader sxfReader = new SXFReader(file);
-        Geometry polygon = sxfReader.getPassportPolygon();
+        Geometry polygon = sxfReader.getPassportXY();
         sxfReader.close();
         assertNotNull(polygon);
     }

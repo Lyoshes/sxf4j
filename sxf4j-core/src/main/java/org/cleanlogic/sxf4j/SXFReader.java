@@ -99,14 +99,25 @@ public class SXFReader {
      * Create polygon geometry of SXF passport (!) sheet through geometry factory
      * @return sheet geometry
      */
-    public Geometry getPassportPolygon() {
-        double[][] xy = sxfPassport.getXY();
-        Coordinate[] coordinates = new Coordinate[xy.length + 1];
-        for (int i = 0; i < xy.length; i++) {
-            Coordinate coordinate = new Coordinate(xy[i][1], xy[i][0]);
+    public Geometry getPassportXY() {
+        return geometryFromArrays(sxfPassport.getXY());
+    }
+
+    public Geometry getPassportBL() {
+        return geometryFromArrays(sxfPassport.getBL());
+    }
+
+    public Geometry getPassportDescret() {
+        return geometryFromArrays(sxfPassport.getDeviceXY());
+    }
+
+    private Geometry geometryFromArrays(double[][] arrays) {
+        Coordinate[] coordinates = new Coordinate[arrays.length + 1];
+        for (int i = 0; i < arrays.length; i++) {
+            Coordinate coordinate = new Coordinate(arrays[i][1], arrays[i][0]);
             coordinates[i] = coordinate;
         }
-        coordinates[xy.length] = new Coordinate(xy[0][1], xy[0][0]);
+        coordinates[arrays.length] = new Coordinate(arrays[0][1], arrays[0][0]);
         LinearRing shell = geometryFactory.createLinearRing(coordinates);
         return geometryFactory.createPolygon(shell);
     }
