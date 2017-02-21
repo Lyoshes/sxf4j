@@ -433,7 +433,11 @@ public class Sxf2Pgsql {
             } finally {
                 coordinate.setOrdinate(0, dstCoordinate.x);
                 coordinate.setOrdinate(1, dstCoordinate.y);
-                coordinate.setOrdinate(2, dstCoordinate.z);
+                if (dstCoordinate.z != dstCoordinate.z) {
+                    coordinate.setOrdinate(2, 0.0);
+                } else {
+                    coordinate.setOrdinate(2, dstCoordinate.z);
+                }
             }
         }
         geometry.setSRID(sxf2PgsqlOptions.dstSRID);
