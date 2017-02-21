@@ -332,6 +332,10 @@ public class SXFRecord {
         return isMultiPolygon;
     }
 
+    public Spline getSpline() {
+        return spline;
+    }
+
     /**
      * Function check SXFDescriptor magic number.
      * @param strict Show message through println or IOException.
