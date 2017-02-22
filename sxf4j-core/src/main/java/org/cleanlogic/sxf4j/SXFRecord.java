@@ -139,9 +139,9 @@ public class SXFRecord {
      */
     private boolean isGraphicScale;
     /**
-     * Build spline by metric
+     * Build spline by metric. Only for {@link SXFPassport#VERSION_4}, for {@link SXFPassport#VERSION_3} is {@link Spline#NO_SPLINE}
      */
-    private Spline spline;
+    private Spline spline = Spline.NO_SPLINE;
     /**
      * Bottom level of generalization(object visible/invisible) table
      */

@@ -101,7 +101,10 @@ public class SXFPassport {
     private int codeTypeFlag;
     private int generalizationFlag;
     private TextEncoding textEncodingFlag;
-    private CoordinatePrecision coordinatePrecisionFlag;
+    /**
+     * Coordinate precision, only for {@link #VERSION_4}. For {@link #VERSION_3} is {@link CoordinatePrecision#UNDEFINED}
+     */
+    private CoordinatePrecision coordinatePrecisionFlag = CoordinatePrecision.UNDEFINED;
     private int orderViewSheetFlag;
 
     /**
