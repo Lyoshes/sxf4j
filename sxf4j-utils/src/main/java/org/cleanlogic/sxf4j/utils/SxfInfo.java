@@ -141,7 +141,7 @@ public class SxfInfo {
                     if (!Utils.SRID_EX.containsKey(srid)) {
                         Proj4FileReader proj4FileReader = new Proj4FileReader();
                         String params[] = proj4FileReader.readParametersFromFile("EPSG", String.valueOf(srid));
-                        if (params.length == 0) {
+                        if (params == null || params.length == 0) {
                             // Wrong srid. Force from passport.
                             srid = sxfPassport.srid(true);
                         }

@@ -84,6 +84,9 @@ public enum FrameOut {
      * @return enum by integer.
      */
     public static FrameOut fromValue(int value) {
+        if (_intToEnumMap.get(value) == null) {
+            return NO_FRAME_OUT;
+        }
         return _intToEnumMap.get(value);
     }
 

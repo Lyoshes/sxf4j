@@ -67,6 +67,9 @@ public enum CoordinatePrecision {
      * @return enum by integer.
      */
     public static CoordinatePrecision fromValue(int value) {
+        if (_intToEnumMap.get(value) == null) {
+            return UNDEFINED;
+        }
         return _intToEnumMap.get(value);
     }
 

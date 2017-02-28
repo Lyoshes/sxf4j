@@ -62,7 +62,7 @@ public class SXFRecord {
     /**
      * Only {@link SXFPassport#VERSION_3}
      */
-    private FrameOut frameOut;
+`    private FrameOut frameOut = FrameOut.NO_FRAME_OUT;
     /**
      * Only {@link SXFPassport#VERSION_3}
      */
@@ -319,6 +319,10 @@ public class SXFRecord {
      */
     public boolean isTextExsits() {
         return isText;
+    }
+
+    public FrameOut getFrameOut() {
+        return frameOut;
     }
 
     /**

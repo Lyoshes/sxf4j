@@ -172,6 +172,8 @@ public enum MapType {
     public static MapType fromValue(int value) {
         if (value == 0 || value == 255 || value == -1) {
             return UNDEFINED;
+        } else if (_intToEnumMap.get(value) == null) {
+            return UNDEFINED;
         }
         return _intToEnumMap.get(value);
     }

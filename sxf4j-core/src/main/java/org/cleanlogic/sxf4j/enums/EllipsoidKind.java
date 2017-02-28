@@ -314,6 +314,9 @@ public enum EllipsoidKind {
      * @return enum by integer.
      */
     public static EllipsoidKind fromValue(int value) {
+        if (_intToEnumMap.get(value) == null) {
+            return UNDEFINED;
+        }
         return _intToEnumMap.get(value);
     }
 

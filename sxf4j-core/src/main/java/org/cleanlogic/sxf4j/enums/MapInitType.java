@@ -142,11 +142,10 @@ public enum MapInitType {
      * @return enum by integer.
      */
     public static MapInitType fromValue(int value) {
-        MapInitType mapInitType = _intToEnumMap.get(value);
-        if (mapInitType == null) {
-            mapInitType = MAPRUN;
+        if (_intToEnumMap.get(value) == null) {
+            return MAPRUN;
         }
-        return mapInitType;
+        return _intToEnumMap.get(value);
     }
 
     /**

@@ -96,6 +96,8 @@ public enum FrameKind {
     public static FrameKind fromValue(int value) {
         if (value == 255) {
             return UNDEFINED;
+        } else if (_intToEnumMap.get(value) == null) {
+            return UNDEFINED;
         }
         return _intToEnumMap.get(value);
     }
