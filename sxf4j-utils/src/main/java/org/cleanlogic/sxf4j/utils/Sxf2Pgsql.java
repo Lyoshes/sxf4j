@@ -169,13 +169,6 @@ public class Sxf2Pgsql {
                 useNomenclature = false;
             }
 
-//            SXFReaderOptions sxfReaderOptions = new SXFReaderOptions();
-//            sxfReaderOptions.flipCoordinates = true;
-//            if (!commandLine.hasOption("t")) {
-//                sxfReaderOptions.srcSRID = sxf2PgsqlOptions.srcSRID;
-//                sxfReaderOptions.dstSRID = sxf2PgsqlOptions.dstSRID;
-//            }
-
             // Begin document
             System.out.println("SET CLIENT_ENCODING TO UTF8;");
             System.out.println("SET STANDARD_CONFORMING_STRINGS TO ON;");
@@ -215,7 +208,7 @@ public class Sxf2Pgsql {
                         sxf2PgsqlOptions.srcSRID = srid;
                     }
                     if (!commandLine.hasOption("t")) {
-                        if (sxf2PgsqlOptions.srcSRID != sxf2PgsqlOptions.dstSRID) {
+                        if (sxf2PgsqlOptions.srcSRID != sxf2PgsqlOptions.dstSRID && sxf2PgsqlOptions.dstSRID != 0) {
                             coordinateTransform = createCoordinateTransform();
                         }
                     }

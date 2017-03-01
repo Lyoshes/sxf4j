@@ -62,7 +62,7 @@ public class SXFRecord {
     /**
      * Only {@link SXFPassport#VERSION_3}
      */
-`    private FrameOut frameOut = FrameOut.NO_FRAME_OUT;
+    private FrameOut frameOut = FrameOut.NO_FRAME_OUT;
     /**
      * Only {@link SXFPassport#VERSION_3}
      */
