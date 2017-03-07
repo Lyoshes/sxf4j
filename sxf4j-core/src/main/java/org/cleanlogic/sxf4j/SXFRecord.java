@@ -766,7 +766,14 @@ public class SXFRecord {
                         }
                         byte[] string = new byte[semantic.scale + 1];
                         buffer.get(string);
-                        String value = new String(string, charset).trim().intern();
+                        int zeroPos = string.length;
+                        for (int i = 0; i < string.length; i++) {
+                            if (string[i] == 0x00) {
+                                zeroPos = i;
+                                break;
+                            }
+                        }
+                        String value = new String(string, charset).substring(0, zeroPos).trim().intern();
                         if (semantic.type == SemanticType.STRUNI) {
                             value = value.replaceAll("\\p{Cc}", "");
                         }
