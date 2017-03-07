@@ -225,7 +225,10 @@ public class Sxf2Pgsql {
                     }
                     if (!sxf2PgsqlOptions.pgdumpFormat) {
                         for (int i = 0; i < sxfReader.getCount(); i++) {
-                            System.out.print(createInsert(sxfReader.getRecordByIncode(i)));
+                            SXFRecord sxfRecord = sxfReader.getRecordByIncode(i);
+                            if (sxfRecord.getLocal() != null) {
+                                System.out.print(createInsert(sxfRecord));
+                            }
                         }
                     } else {
                         createCopy(sxfReader);
@@ -318,6 +321,9 @@ public class Sxf2Pgsql {
 
         String schemaName = sxf2PgsqlOptions.schemaName;
         for (Local local : Local.values()) {
+            if (local == null) {
+                continue;
+            }
             if (preparedSXFRecords.get(local) == null) {
                 continue;
             }

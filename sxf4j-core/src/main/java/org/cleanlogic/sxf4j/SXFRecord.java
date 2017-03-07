@@ -347,7 +347,7 @@ public class SXFRecord {
      */
     private void checkIdentifier(boolean strict) throws IOException {
         if (identifier != IDENTIFIER) {
-            String message = "Wrong identifier(magic number) of SXF Record, expected " + IDENTIFIER + ", got " + identifier;
+            String message = String.format("Wrong identifier(magic number) of SXF Record, expected 0x%08x got 0x%08x", IDENTIFIER, identifier);
             if (!strict) {
                 System.err.println(message);
             } else {
@@ -537,6 +537,9 @@ public class SXFRecord {
      * @throws IOException exception if wrong.
      */
     public Geometry geometry() throws IOException {
+        if (identifier != IDENTIFIER) {
+            return geometryFactory.createLinearRing(new Coordinate[0]);
+        }
         if (geometry != null) {
             return geometry;
         }
@@ -698,6 +701,9 @@ public class SXFRecord {
      * @return list of semantics.
      */
     public List<Semantic> semantics() {
+        if (identifier != IDENTIFIER) {
+            return semantics;
+        }
         if (isSemantic && semantics.size() > 0) {
             return semantics;
         }
