@@ -205,7 +205,7 @@ public class SXFRecord {
      * To convert into windows constans see {@link TextMetricAlign#getTextHorizontalAlign()}
      * and {@link TextMetricAlign#getTextVericalAlign()}.
      */
-    public final class Text {
+    public static final class Text {
         private String text;
         private TextMetricAlign align;
 

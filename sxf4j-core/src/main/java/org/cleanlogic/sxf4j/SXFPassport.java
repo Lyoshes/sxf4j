@@ -302,7 +302,7 @@ public class SXFPassport {
      */
     private void checkIdentifier(boolean strict) throws IOException {
         if (identifier != IDENTIFIER) {
-            String message = "Wrong identifier(magic number) of SXF Passport, expected " + IDENTIFIER + ", got " + identifier;
+            String message = String.format("Wrong identifier(magic number) of SXF Passport, expected 0x%08x, got 0x%08x", IDENTIFIER, identifier);
             if (!strict) {
                 System.err.println(message);
             } else {
