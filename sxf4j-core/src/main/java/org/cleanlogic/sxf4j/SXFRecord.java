@@ -677,11 +677,11 @@ public class SXFRecord {
             }
             strlen++;
         }
-        String textEncoding = "UTF8";
-        if (!isUnicode) {
-            textEncoding = TextEncoding.CP1251.getName();
-        }
-        String text = new String(string, textEncoding).substring(0, strlen).intern();
+//        String textEncoding = "UTF8";
+//        if (!isUnicode) {
+//            textEncoding = TextEncoding.CP1251.getName();
+//        }
+        String text = new String(string, sxfPassport.getTextEncoding().getName()).substring(0, strlen).intern();
         TextMetricAlign align = TextMetricAlign.BASELINE_LEFT;
         if (strlen + 1 < length) {
             byte c = string[strlen + 1];
