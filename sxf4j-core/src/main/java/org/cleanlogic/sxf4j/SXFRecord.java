@@ -239,7 +239,7 @@ public class SXFRecord {
         /**
          * Code of semantic.
          */
-        public short code;
+        public int code;
         /**
          * Type of semantic.
          */
@@ -715,7 +715,7 @@ public class SXFRecord {
         while (totalBytes > 0) {
             Semantic semantic = new Semantic();
 
-            semantic.code = buffer.getShort();
+            semantic.code = buffer.getShort() & 0xFFFF;
             byte[] lengthCode = new byte[2];
             buffer.get(lengthCode);
             int type = lengthCode[0] & 0xFF;
@@ -768,7 +768,7 @@ public class SXFRecord {
                                 charset = Charset.forName(TextEncoding.KOI8R.getName());
                                 break;
                             default:
-                                charset = Charset.forName("UTF-8");
+                                charset = Charset.forName(sxfPassport.getTextEncoding().getName());//"UTF-8");
                         }
                         byte[] string = new byte[semantic.scale + 1];
                         buffer.get(string);

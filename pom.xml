@@ -12,6 +12,7 @@
     <modules>
         <module>sxf4j-core</module>
         <module>sxf4j-utils</module>
+        <module>sxf4j-gwt</module>
     </modules>
 
 

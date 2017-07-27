@@ -69,7 +69,7 @@ public class SXFReader {
         sxfPassport.read(buffer, strict);
 
         // Set srid for factory
-        geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING_SINGLE), sxfPassport.srid());
+        geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING), sxfPassport.srid());
 
         sxfDescriptor = new SXFDescriptor(sxfPassport);
         sxfDescriptor.read(buffer, strict);
