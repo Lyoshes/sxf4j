@@ -736,6 +736,20 @@ public class SXFPassport {
         xSouthEast = buffer.getInt() / 10.;
         ySouthEast = buffer.getInt() / 10.;
 
+        double delta = 0.000001;
+        if (ySouthWest == 8000000.0) {
+            ySouthWest += delta;
+        }
+        if (yNorthWest == 8000000.0) {
+            yNorthWest += delta;
+        }
+        if (yNorthEast == 8000000.0) {
+            yNorthEast += delta;
+        }
+        if (ySouthEast == 8000000.0) {
+            ySouthEast += delta;
+        }
+
         bSouthWest = buffer.getInt() / Math.pow(10., 8.) * 180.0 / Math.PI;
         lSouthWest = buffer.getInt() / Math.pow(10., 8.) * 180.0 / Math.PI;
         bNorthWest = buffer.getInt() / Math.pow(10., 8.) * 180.0 / Math.PI;
@@ -838,6 +852,20 @@ public class SXFPassport {
         yNorthEast = buffer.getDouble();
         xSouthEast = buffer.getDouble();
         ySouthEast = buffer.getDouble();
+
+        double delta = 0.000001;
+        if (ySouthWest == 8000000.0) {
+            ySouthWest += delta;
+        }
+        if (yNorthWest == 8000000.0) {
+            yNorthWest += delta;
+        }
+        if (yNorthEast == 8000000.0) {
+            yNorthEast += delta;
+        }
+        if (ySouthEast == 8000000.0) {
+            ySouthEast += delta;
+        }
 
         bSouthWest = buffer.getDouble() * 180.0 / Math.PI;
         lSouthWest = buffer.getDouble() * 180.0 / Math.PI;

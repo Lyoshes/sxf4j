@@ -650,6 +650,10 @@ public class SXFRecord {
             }
         }
 
+        if (y == 8000000.0) {
+            y += 0.000001;
+        }
+
         if (sxfPassport.isDescrets()) {
             double[][] xy = sxfPassport.getXY();
             double[][] deviceXY = sxfPassport.getDeviceXY();
